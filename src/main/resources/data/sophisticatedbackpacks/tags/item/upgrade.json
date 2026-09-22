@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "sophisticated_advanced_crafting:backpack_advanced_crafting_upgrade",
+      "required": false
+    }
+  ]
+}

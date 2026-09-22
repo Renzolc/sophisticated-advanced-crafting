@@ -1,0 +1,12 @@
+{
+  "itemGroup.sophisticated_advanced_crafting": "Sophisticated Advanced Crafting",
+  "item.sophisticated_advanced_crafting.backpack_advanced_crafting_upgrade": "Advanced Crafting Upgrade (Backpack)",
+  "item.sophisticated_advanced_crafting.backpack_advanced_crafting_upgrade.tooltip": "Crafting upgrade with recipe book. Places recipes using backpack storage and player inventory.",
+  "item.sophisticated_advanced_crafting.storage_advanced_crafting_upgrade": "Advanced Crafting Upgrade (Storage)",
+  "item.sophisticated_advanced_crafting.storage_advanced_crafting_upgrade.tooltip": "Crafting upgrade with recipe book. Places recipes using storage inventory and player inventory.",
+  "gui.sophisticated_advanced_crafting.tab.backpack_advanced_crafting": "Adv. Crafting",
+  "gui.sophisticated_advanced_crafting.tab.backpack_advanced_crafting.tooltip": "Advanced Crafting Upgrade",
+  "gui.sophisticated_advanced_crafting.tab.storage_advanced_crafting": "Adv. Crafting",
+  "gui.sophisticated_advanced_crafting.tab.storage_advanced_crafting.tooltip": "Advanced Crafting Upgrade",
+  "gui.sophisticated_advanced_crafting.error.crafting_upgrade_exists": "Cannot add: a crafting upgrade is already installed"
+}

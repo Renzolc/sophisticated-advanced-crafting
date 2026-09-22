@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "sophisticated_advanced_crafting:item/storage_advanced_crafting_upgrade"
+  }
+}

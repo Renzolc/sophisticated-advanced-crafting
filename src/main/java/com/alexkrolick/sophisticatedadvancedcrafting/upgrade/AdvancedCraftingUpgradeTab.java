@@ -30,14 +30,16 @@ import static net.p3pp3rf1y.sophisticatedcore.client.gui.utils.GuiHelper.GUI_CON
  * Placement and craftability consider backpack storage and player inventory.
  * <p>
  * The craft grid stays in a compact tab (same footprint as stock crafting). The recipe book
- * floats beside the craft section and is clamped on-screen, flipping to the side with more
- * free horizontal space when needed.
+ * floats beside the craft section and is re-anchored every tick so it never overlaps the craft
+ * grid, result slot, or toggle buttons (category-tab overhang included in the collision box).
  */
 public class AdvancedCraftingUpgradeTab extends UpgradeSettingsTab<CraftingUpgradeContainer> {
 	private static final int BOOK_PANEL_WIDTH = 147;
 	private static final int BOOK_PANEL_HEIGHT = 166;
+	/** Category tabs overhang ~30px to the left of the 147px green panel. */
+	private static final int BOOK_TAB_OVERHANG = 30;
 	private static final int BOOK_SCREEN_MARGIN = 3;
-	private static final int BOOK_GAP = 4;
+	private static final int BOOK_GAP = 10;
 	private static final int BOOK_PREFERRED_Y_OFFSET = 20;
 	private static final TextureBlitData ARROW = new TextureBlitData(GUI_CONTROLS, new UV(97, 216), new Dimension(15, 8));
 
@@ -118,36 +120,79 @@ public class AdvancedCraftingUpgradeTab extends UpgradeSettingsTab<CraftingUpgra
 	}
 
 	/**
-	 * Prefer the side of the craft section with more free horizontal space; clamp so the
-	 * 147×166 panel stays fully on-screen with {@link #BOOK_SCREEN_MARGIN} px margin.
+	 * Place the green recipe book so it NEVER overlaps the craft section (3×3 grid + result +
+	 * toggle buttons). Collision box includes the ~30px category-tab overhang on the left of
+	 * the 147px panel. Prefer left, then right, then above, then below; never clamp into the
+	 * craft exclusion rect.
 	 */
 	private void computeBookAnchor() {
 		Minecraft mc = Minecraft.getInstance();
 		int screenW = mc.getWindow().getGuiScaledWidth();
 		int screenH = mc.getWindow().getGuiScaledHeight();
 
-		int craftLeft = x;
-		int craftRight = x + craftSectionWidth;
+		// Hard exclusion: entire open craft tab (grid, result slot, toggle buttons).
+		int excludeLeft = x;
+		int excludeTop = y;
+		int excludeRight = x + craftSectionWidth;
+		int excludeBottom = y + openTabDimension.height();
 
-		int freeLeft = craftLeft - BOOK_SCREEN_MARGIN;
-		int freeRight = screenW - craftRight - BOOK_SCREEN_MARGIN;
+		int panelW = BOOK_PANEL_WIDTH;
+		int panelH = BOOK_PANEL_HEIGHT;
 
-		boolean placeLeft;
-		if (freeLeft >= BOOK_PANEL_WIDTH && freeLeft >= freeRight) {
-			placeLeft = true;
-		} else if (freeRight >= BOOK_PANEL_WIDTH) {
-			placeLeft = false;
-		} else {
-			placeLeft = freeLeft >= freeRight;
+		int minLeft = BOOK_SCREEN_MARGIN + BOOK_TAB_OVERHANG; // keep tabs on-screen too
+		int maxLeft = Math.max(minLeft, screenW - panelW - BOOK_SCREEN_MARGIN);
+		int minTop = BOOK_SCREEN_MARGIN;
+		int maxTop = Math.max(minTop, screenH - panelH - BOOK_SCREEN_MARGIN);
+
+		record Candidate(int left, int top, int priority) {}
+		java.util.ArrayList<Candidate> candidates = new java.util.ArrayList<>();
+
+		// Left of craft: panel sits left; tabs overhang further left (away from craft).
+		candidates.add(new Candidate(excludeLeft - BOOK_GAP - panelW, excludeTop + BOOK_PREFERRED_Y_OFFSET, 0));
+		// Right of craft: tabs overhang LEFT toward craft — push panel further right by overhang.
+		candidates.add(new Candidate(excludeRight + BOOK_GAP + BOOK_TAB_OVERHANG, excludeTop + BOOK_PREFERRED_Y_OFFSET, 1));
+		// Above / below: center-ish on craft section; tabs hang left of panel.
+		int aboveBelowLeft = excludeLeft + BOOK_TAB_OVERHANG;
+		candidates.add(new Candidate(aboveBelowLeft, excludeTop - BOOK_GAP - panelH, 2));
+		candidates.add(new Candidate(aboveBelowLeft, excludeBottom + BOOK_GAP, 3));
+
+		Candidate best = null;
+		for (Candidate c : candidates) {
+			int left = Mth.clamp(c.left, minLeft, maxLeft);
+			int top = Mth.clamp(c.top, minTop, maxTop);
+			// Collision rect includes tab overhang to the left of the panel.
+			int colLeft = left - BOOK_TAB_OVERHANG;
+			int colRight = left + panelW;
+			int colTop = top;
+			int colBottom = top + panelH;
+			if (rectsOverlap(colLeft, colTop, colRight, colBottom, excludeLeft, excludeTop, excludeRight, excludeBottom)) {
+				continue;
+			}
+			if (best == null || c.priority < best.priority) {
+				best = new Candidate(left, top, c.priority);
+			}
 		}
 
-		int desiredLeft = placeLeft
-				? craftLeft - BOOK_GAP - BOOK_PANEL_WIDTH
-				: craftRight + BOOK_GAP;
-		bookLeft = Mth.clamp(desiredLeft, BOOK_SCREEN_MARGIN, Math.max(BOOK_SCREEN_MARGIN, screenW - BOOK_PANEL_WIDTH - BOOK_SCREEN_MARGIN));
+		if (best != null) {
+			bookLeft = best.left;
+			bookTop = best.top;
+			return;
+		}
 
-		int desiredTop = y + BOOK_PREFERRED_Y_OFFSET;
-		bookTop = Mth.clamp(desiredTop, BOOK_SCREEN_MARGIN, Math.max(BOOK_SCREEN_MARGIN, screenH - BOOK_PANEL_HEIGHT - BOOK_SCREEN_MARGIN));
+		// Last resort: no non-overlapping placement fits — leave previous anchor;
+		// caller may hide via toggle. Prefer not mutating visibility mid-tick.
+		bookLeft = Mth.clamp(bookLeft, minLeft, maxLeft);
+		bookTop = Mth.clamp(bookTop, minTop, maxTop);
+		int colLeft = bookLeft - BOOK_TAB_OVERHANG;
+		if (rectsOverlap(colLeft, bookTop, bookLeft + panelW, bookTop + panelH,
+				excludeLeft, excludeTop, excludeRight, excludeBottom)) {
+			// Force off-screen parking above viewport so it cannot cover the grid.
+			bookTop = -panelH - BOOK_GAP;
+		}
+	}
+
+	private static boolean rectsOverlap(int aL, int aT, int aR, int aB, int bL, int bT, int bR, int bB) {
+		return aL < bR && aR > bL && aT < bB && aB > bT;
 	}
 
 	private void initRecipeBook() {
@@ -215,12 +260,20 @@ public class AdvancedCraftingUpgradeTab extends UpgradeSettingsTab<CraftingUpgra
 		}
 	}
 
+	/**
+	 * Screen-level mouse forwarding for the floating book (may sit outside this tab's widget bounds).
+	 * Does not route through {@link #mouseClicked} so craft-grid slot clicks are not stolen.
+	 */
+	public boolean handleRecipeBookMouseClicked(double mouseX, double mouseY, int button) {
+		return isOpen && bookVisible && recipeBook.isVisible() && recipeBook.mouseClicked(mouseX, mouseY, button);
+	}
+
 	@Override
 	public boolean mouseClicked(double mouseX, double mouseY, int button) {
 		if (isOpen && recipeToggleButton != null && recipeToggleButton.mouseClicked(mouseX, mouseY, button)) {
 			return true;
 		}
-		if (isOpen && bookVisible && recipeBook.isVisible() && recipeBook.mouseClicked(mouseX, mouseY, button)) {
+		if (handleRecipeBookMouseClicked(mouseX, mouseY, button)) {
 			return true;
 		}
 		return super.mouseClicked(mouseX, mouseY, button);

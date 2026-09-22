@@ -58,6 +58,7 @@ neoForge {
         }
         configureEach {
             systemProperty 'forge.logging.markers', 'REGISTRIES'
+            systemProperty 'mixin.env.disableRefMap', 'true'
             logLevel = org.slf4j.event.Level.DEBUG
         }
     }

@@ -20,6 +20,7 @@ public final class ClientSetup {
 		modBus.addListener(ClientSetup::onClientSetup);
 		NeoForge.EVENT_BUS.addListener(ClientSetup::onKeyPressed);
 		NeoForge.EVENT_BUS.addListener(ClientSetup::onCharTyped);
+		NeoForge.EVENT_BUS.addListener(ClientSetup::onMouseClicked);
 	}
 
 	private static void onClientSetup(FMLClientSetupEvent event) {
@@ -44,6 +45,18 @@ public final class ClientSetup {
 	private static void onCharTyped(ScreenEvent.CharacterTyped.Pre event) {
 		findOpenAdvancedTab(event.getScreen()).ifPresent(tab -> {
 			if (tab.handleCharTyped(event.getCodePoint(), event.getModifiers())) {
+				event.setCanceled(true);
+			}
+		});
+	}
+
+	/**
+	 * Forward clicks to the floating recipe book even when it sits outside the upgrade tab's
+	 * widget bounds (book is rendered by the tab but can float beside/above/below it).
+	 */
+	private static void onMouseClicked(ScreenEvent.MouseButtonPressed.Pre event) {
+		findOpenAdvancedTab(event.getScreen()).ifPresent(tab -> {
+			if (tab.handleRecipeBookMouseClicked(event.getMouseX(), event.getMouseY(), event.getButton())) {
 				event.setCanceled(true);
 			}
 		});

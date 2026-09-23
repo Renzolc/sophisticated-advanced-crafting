@@ -55,7 +55,8 @@ public class DualSourceRecipeBookMenu extends RecipeBookMenu<CraftingInput, Craf
 		return crafting;
 	}
 
-	/** Keep ghost-recipe coordinates aligned with the upgrade tab's moved slots. */
+	/** Keep ghost-recipe coordinates aligned with the upgrade tab's moved slots.
+	 * Writes only mirror slot x/y — never mutates real storage / player inventory / hotbar slots. */
 	public void syncSlotPositions() {
 		List<Slot> upgradeSlots = crafting.getSlots();
 		slots.get(0).x = upgradeSlots.get(9).x;

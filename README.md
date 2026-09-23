@@ -6,7 +6,7 @@ One jar replaces the separate `sb-advanced-crafting` and `ss-advanced-crafting` 
 
 ## Features
 
-- Floating green recipe book that never overlaps the craft grid (left → right → above → below; category-tab overhang included)
+- Floating green recipe book that never overlaps the storage GUI / player inventory / hotbar (right → left → above → below outside the full screen content; closed by default; category-tab overhang included)
 - Dual-source recipe placement in the upgrade tab (storage/backpack inventory + player inventory)
 - **World crafting tables** also pull from backpack inventory when the backpack has this Advanced Crafting upgrade
 - Distinct icons: backpack copper+gold, storage wood+gold
@@ -32,7 +32,7 @@ Conflicts with the stock `CraftingUpgradeItem` in the same backpack/storage.
 ./gradlew build
 ```
 
-Jar: `build/libs/sophisticated_advanced_crafting-1.0.1.jar`
+Jar: `build/libs/sophisticated_advanced_crafting-1.0.3.jar`
 
 ## License
 

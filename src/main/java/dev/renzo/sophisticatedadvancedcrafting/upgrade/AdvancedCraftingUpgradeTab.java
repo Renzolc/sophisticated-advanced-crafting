@@ -30,8 +30,9 @@ import static net.p3pp3rf1y.sophisticatedcore.client.gui.utils.GuiHelper.GUI_CON
  * Placement and craftability consider backpack storage and player inventory.
  * <p>
  * The craft grid stays in a compact tab (same footprint as stock crafting). The recipe book
- * floats beside the craft section and is re-anchored every tick so it never overlaps the craft
- * grid, result slot, or toggle buttons (category-tab overhang included in the collision box).
+ * floats in free space outside the entire storage screen content area (backpack slots + player
+ * inventory + hotbar + craft tab) and is re-anchored every tick. If no non-overlapping on-screen
+ * spot exists, the book stays closed rather than covering inventory.
  */
 public class AdvancedCraftingUpgradeTab extends UpgradeSettingsTab<CraftingUpgradeContainer> {
 	private static final int BOOK_PANEL_WIDTH = 147;
@@ -39,7 +40,8 @@ public class AdvancedCraftingUpgradeTab extends UpgradeSettingsTab<CraftingUpgra
 	/** Category tabs overhang ~30px to the left of the 147px green panel. */
 	private static final int BOOK_TAB_OVERHANG = 30;
 	private static final int BOOK_SCREEN_MARGIN = 3;
-	private static final int BOOK_GAP = 10;
+	/** Gap between book collision box and the full storage GUI exclusion rect. */
+	private static final int BOOK_GAP = 16;
 	private static final int BOOK_PREFERRED_Y_OFFSET = 20;
 	private static final TextureBlitData ARROW = new TextureBlitData(GUI_CONTROLS, new UV(97, 216), new Dimension(15, 8));
 
@@ -47,7 +49,8 @@ public class AdvancedCraftingUpgradeTab extends UpgradeSettingsTab<CraftingUpgra
 	private final DualSourceRecipeBookComponent recipeBook = new DualSourceRecipeBookComponent();
 	private DualSourceRecipeBookMenu bridgeMenu;
 	private ImageButton recipeToggleButton;
-	private boolean bookVisible = true;
+	/** Closed by default so opening the upgrade tab does not slam the book onto the GUI. */
+	private boolean bookVisible = false;
 	private final int craftSectionWidth;
 	private int bookLeft;
 	private int bookTop;
@@ -104,15 +107,27 @@ public class AdvancedCraftingUpgradeTab extends UpgradeSettingsTab<CraftingUpgra
 	}
 
 	private void toggleBook() {
-		bookVisible = !bookVisible;
-		updateOpenDimensions();
-		if (isOpen) {
-			setWidth(Math.max(openTabDimension.width(), 21));
-			setHeight(openTabDimension.height());
-		}
-		if (bookVisible) {
+		if (!bookVisible) {
+			// Only open if a non-overlapping placement exists.
+			if (!computeBookAnchor()) {
+				bookVisible = false;
+				recipeBook.setBookVisible(false);
+				return;
+			}
+			bookVisible = true;
+			updateOpenDimensions();
+			if (isOpen) {
+				setWidth(Math.max(openTabDimension.width(), 21));
+				setHeight(openTabDimension.height());
+			}
 			initRecipeBook();
 		} else {
+			bookVisible = false;
+			updateOpenDimensions();
+			if (isOpen) {
+				setWidth(Math.max(openTabDimension.width(), 21));
+				setHeight(openTabDimension.height());
+			}
 			recipeBook.setBookVisible(false);
 		}
 		moveSlotsToTab();
@@ -120,21 +135,25 @@ public class AdvancedCraftingUpgradeTab extends UpgradeSettingsTab<CraftingUpgra
 	}
 
 	/**
-	 * Place the green recipe book so it NEVER overlaps the craft section (3×3 grid + result +
-	 * toggle buttons). Collision box includes the ~30px category-tab overhang on the left of
-	 * the 147px panel. Prefer left, then right, then above, then below; never clamp into the
-	 * craft exclusion rect.
+	 * Place the green recipe book so it NEVER overlaps the entire open storage screen content:
+	 * backpack/storage slots + player inventory + hotbar + craft tab.
+	 * Collision box includes the ~30px category-tab overhang on the left of the 147px panel.
+	 * Prefer right of whole GUI, then left, then above, then below. Returns {@code false} if no
+	 * non-overlapping on-screen placement exists (caller should keep the book closed).
 	 */
-	private void computeBookAnchor() {
+	private boolean computeBookAnchor() {
 		Minecraft mc = Minecraft.getInstance();
 		int screenW = mc.getWindow().getGuiScaledWidth();
 		int screenH = mc.getWindow().getGuiScaledHeight();
 
-		// Hard exclusion: entire open craft tab (grid, result slot, toggle buttons).
-		int excludeLeft = x;
-		int excludeTop = y;
-		int excludeRight = x + craftSectionWidth;
-		int excludeBottom = y + openTabDimension.height();
+		// Full storage GUI content area (not just the compact craft tab).
+		int excludeLeft = screen.getGuiLeft();
+		int excludeTop = screen.getGuiTop();
+		int excludeRight = Math.max(screen.getGuiLeft() + screen.getXSize(), x + craftSectionWidth);
+		int excludeBottom = screen.getGuiTop() + screen.getYSize();
+		// Craft tab may extend below/beside the image; fold it into the exclusion.
+		excludeTop = Math.min(excludeTop, y);
+		excludeBottom = Math.max(excludeBottom, y + openTabDimension.height());
 
 		int panelW = BOOK_PANEL_WIDTH;
 		int panelH = BOOK_PANEL_HEIGHT;
@@ -147,19 +166,23 @@ public class AdvancedCraftingUpgradeTab extends UpgradeSettingsTab<CraftingUpgra
 		record Candidate(int left, int top, int priority) {}
 		java.util.ArrayList<Candidate> candidates = new java.util.ArrayList<>();
 
-		// Left of craft: panel sits left; tabs overhang further left (away from craft).
-		candidates.add(new Candidate(excludeLeft - BOOK_GAP - panelW, excludeTop + BOOK_PREFERRED_Y_OFFSET, 0));
-		// Right of craft: tabs overhang LEFT toward craft — push panel further right by overhang.
-		candidates.add(new Candidate(excludeRight + BOOK_GAP + BOOK_TAB_OVERHANG, excludeTop + BOOK_PREFERRED_Y_OFFSET, 1));
-		// Above / below: center-ish on craft section; tabs hang left of panel.
-		int aboveBelowLeft = excludeLeft + BOOK_TAB_OVERHANG;
+		// Prefer right of whole GUI (JEI may leave no room — overlap check rejects then).
+		candidates.add(new Candidate(excludeRight + BOOK_GAP + BOOK_TAB_OVERHANG, excludeTop + BOOK_PREFERRED_Y_OFFSET, 0));
+		// Left of whole GUI: panel sits left; tabs overhang further left (away from GUI).
+		candidates.add(new Candidate(excludeLeft - BOOK_GAP - panelW, excludeTop + BOOK_PREFERRED_Y_OFFSET, 1));
+		// Above / below: align near center of exclusion; tabs hang left of panel.
+		int aboveBelowLeft = excludeLeft + Math.max(0, (excludeRight - excludeLeft - panelW) / 2) + BOOK_TAB_OVERHANG;
 		candidates.add(new Candidate(aboveBelowLeft, excludeTop - BOOK_GAP - panelH, 2));
 		candidates.add(new Candidate(aboveBelowLeft, excludeBottom + BOOK_GAP, 3));
 
 		Candidate best = null;
 		for (Candidate c : candidates) {
-			int left = Mth.clamp(c.left, minLeft, maxLeft);
-			int top = Mth.clamp(c.top, minTop, maxTop);
+			// Reject candidates that need clamping into the exclusion rect.
+			if (c.left < minLeft || c.left > maxLeft || c.top < minTop || c.top > maxTop) {
+				continue;
+			}
+			int left = c.left;
+			int top = c.top;
 			// Collision rect includes tab overhang to the left of the panel.
 			int colLeft = left - BOOK_TAB_OVERHANG;
 			int colRight = left + panelW;
@@ -176,19 +199,10 @@ public class AdvancedCraftingUpgradeTab extends UpgradeSettingsTab<CraftingUpgra
 		if (best != null) {
 			bookLeft = best.left;
 			bookTop = best.top;
-			return;
+			return true;
 		}
 
-		// Last resort: no non-overlapping placement fits — leave previous anchor;
-		// caller may hide via toggle. Prefer not mutating visibility mid-tick.
-		bookLeft = Mth.clamp(bookLeft, minLeft, maxLeft);
-		bookTop = Mth.clamp(bookTop, minTop, maxTop);
-		int colLeft = bookLeft - BOOK_TAB_OVERHANG;
-		if (rectsOverlap(colLeft, bookTop, bookLeft + panelW, bookTop + panelH,
-				excludeLeft, excludeTop, excludeRight, excludeBottom)) {
-			// Force off-screen parking above viewport so it cannot cover the grid.
-			bookTop = -panelH - BOOK_GAP;
-		}
+		return false;
 	}
 
 	private static boolean rectsOverlap(int aL, int aT, int aR, int aB, int bL, int bT, int bR, int bB) {
@@ -200,7 +214,11 @@ public class AdvancedCraftingUpgradeTab extends UpgradeSettingsTab<CraftingUpgra
 		if (bridgeMenu == null || mc.player == null) {
 			return;
 		}
-		computeBookAnchor();
+		if (!computeBookAnchor()) {
+			bookVisible = false;
+			recipeBook.setBookVisible(false);
+			return;
+		}
 		recipeBook.initAnchored(mc, bridgeMenu, bookLeft, bookTop);
 	}
 
@@ -214,8 +232,16 @@ public class AdvancedCraftingUpgradeTab extends UpgradeSettingsTab<CraftingUpgra
 
 	@Override
 	public void tick() {
-		if (isOpen && bookVisible && recipeBook.isVisible()) {
-			computeBookAnchor();
+		if (!isOpen || !bookVisible) {
+			return;
+		}
+		if (!computeBookAnchor()) {
+			// Lost a valid placement (resize / JEI) — close rather than overlap inventory.
+			bookVisible = false;
+			recipeBook.setBookVisible(false);
+			return;
+		}
+		if (recipeBook.isVisible()) {
 			recipeBook.reanchor(bookLeft, bookTop);
 			recipeBook.tick();
 			if (bridgeMenu != null) {
@@ -289,6 +315,7 @@ public class AdvancedCraftingUpgradeTab extends UpgradeSettingsTab<CraftingUpgra
 
 	@Override
 	protected void moveSlotsToTab() {
+		// Only craft-grid / result slots move — never player inventory, hotbar, or storage slots.
 		int gridLeftOffset = craftingUIAddition.getWidth();
 		int slotNumber = 0;
 		for (Slot slot : getContainer().getSlots()) {

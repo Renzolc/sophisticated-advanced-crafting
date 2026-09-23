@@ -208,8 +208,8 @@ public class AdvancedCraftingUpgradeTab extends UpgradeSettingsTab<CraftingUpgra
 		if (recipeToggleButton == null) {
 			return;
 		}
-		int gridLeft = x + craftingUIAddition.getWidth();
-		recipeToggleButton.setPosition(gridLeft + 3, y + 42);
+		// Sit with shift-click / refill toggles above the grid — never over craft slots (y+44).
+		recipeToggleButton.setPosition(x + 39, y + 24);
 	}
 
 	@Override

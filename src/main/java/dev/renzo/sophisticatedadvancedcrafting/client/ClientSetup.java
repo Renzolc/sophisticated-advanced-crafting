@@ -21,6 +21,7 @@ public final class ClientSetup {
 		NeoForge.EVENT_BUS.addListener(ClientSetup::onKeyPressed);
 		NeoForge.EVENT_BUS.addListener(ClientSetup::onCharTyped);
 		NeoForge.EVENT_BUS.addListener(ClientSetup::onMouseClicked);
+		NeoForge.EVENT_BUS.addListener(ClientSetup::onScreenRenderPost);
 	}
 
 	private static void onClientSetup(FMLClientSetupEvent event) {
@@ -60,6 +61,11 @@ public final class ClientSetup {
 				event.setCanceled(true);
 			}
 		});
+	}
+
+	private static void onScreenRenderPost(ScreenEvent.Render.Post event) {
+		findOpenAdvancedTab(event.getScreen()).ifPresent(tab ->
+				tab.renderRecipeBook(event.getGuiGraphics(), event.getMouseX(), event.getMouseY(), event.getPartialTick()));
 	}
 
 	private static java.util.Optional<AdvancedCraftingUpgradeTab> findOpenAdvancedTab(Screen screen) {

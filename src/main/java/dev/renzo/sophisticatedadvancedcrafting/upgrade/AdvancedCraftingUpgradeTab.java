@@ -5,7 +5,6 @@ import dev.renzo.sophisticatedadvancedcrafting.client.recipebook.DualSourceRecip
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.ImageButton;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.recipebook.RecipeBookComponent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
@@ -135,78 +134,84 @@ public class AdvancedCraftingUpgradeTab extends UpgradeSettingsTab<CraftingUpgra
 	}
 
 	/**
-	 * Place the green recipe book so it NEVER overlaps the entire open storage screen content:
-	 * backpack/storage slots + player inventory + hotbar + craft tab.
-	 * Collision box includes the ~30px category-tab overhang on the left of the 147px panel.
-	 * Prefer right of whole GUI, then left, then above, then below. Returns {@code false} if no
-	 * non-overlapping on-screen placement exists (caller should keep the book closed).
+	 * Place the green recipe book outside the storage screen (backpack slots, player inventory,
+	 * hotbar, and the open craft tab). Left is preferred so the book is not under JEI.
+	 * <p>
+	 * Category tabs may hang off the screen edge. On a short GUI (auto scale on an ultrawide)
+	 * that is the only way to sit the 147×166 panel beside a full-height backpack without covering
+	 * slots. If even that cannot fit, the panel is clamped on screen at the spot that covers the
+	 * least GUI, so the button still opens a usable book.
 	 */
 	private boolean computeBookAnchor() {
 		Minecraft mc = Minecraft.getInstance();
 		int screenW = mc.getWindow().getGuiScaledWidth();
 		int screenH = mc.getWindow().getGuiScaledHeight();
 
-		// Full storage GUI content area (not just the compact craft tab).
 		int excludeLeft = screen.getGuiLeft();
 		int excludeTop = screen.getGuiTop();
-		int excludeRight = Math.max(screen.getGuiLeft() + screen.getXSize(), x + craftSectionWidth);
-		int excludeBottom = screen.getGuiTop() + screen.getYSize();
-		// Craft tab may extend below/beside the image; fold it into the exclusion.
+		int excludeRight = Math.max(screen.getGuiLeft() + screen.getXSize(), x + Math.max(getWidth(), craftSectionWidth));
+		int excludeBottom = Math.max(screen.getGuiTop() + screen.getYSize(), y + openTabDimension.height());
 		excludeTop = Math.min(excludeTop, y);
-		excludeBottom = Math.max(excludeBottom, y + openTabDimension.height());
 
 		int panelW = BOOK_PANEL_WIDTH;
 		int panelH = BOOK_PANEL_HEIGHT;
-
-		int minLeft = BOOK_SCREEN_MARGIN + BOOK_TAB_OVERHANG; // keep tabs on-screen too
-		int maxLeft = Math.max(minLeft, screenW - panelW - BOOK_SCREEN_MARGIN);
+		int minLeft = BOOK_SCREEN_MARGIN;
+		int maxLeft = screenW - panelW - BOOK_SCREEN_MARGIN;
+		if (maxLeft < minLeft) {
+			maxLeft = minLeft;
+		}
 		int minTop = BOOK_SCREEN_MARGIN;
-		int maxTop = Math.max(minTop, screenH - panelH - BOOK_SCREEN_MARGIN);
+		int maxTop = screenH - panelH - BOOK_SCREEN_MARGIN;
+		if (maxTop < minTop) {
+			maxTop = minTop;
+		}
 
 		record Candidate(int left, int top, int priority) {}
 		java.util.ArrayList<Candidate> candidates = new java.util.ArrayList<>();
-
-		// Prefer right of whole GUI (JEI may leave no room — overlap check rejects then).
-		candidates.add(new Candidate(excludeRight + BOOK_GAP + BOOK_TAB_OVERHANG, excludeTop + BOOK_PREFERRED_Y_OFFSET, 0));
-		// Left of whole GUI: panel sits left; tabs overhang further left (away from GUI).
-		candidates.add(new Candidate(excludeLeft - BOOK_GAP - panelW, excludeTop + BOOK_PREFERRED_Y_OFFSET, 1));
-		// Above / below: align near center of exclusion; tabs hang left of panel.
-		int aboveBelowLeft = excludeLeft + Math.max(0, (excludeRight - excludeLeft - panelW) / 2) + BOOK_TAB_OVERHANG;
+		int alignedTop = excludeTop + BOOK_PREFERRED_Y_OFFSET;
+		// Left of the whole GUI. Panel sits in the gap; category tabs hang further left.
+		candidates.add(new Candidate(excludeLeft - BOOK_GAP - panelW, alignedTop, 0));
+		// Right is the JEI side — only used when the left cannot fit.
+		candidates.add(new Candidate(excludeRight + BOOK_GAP + BOOK_TAB_OVERHANG, alignedTop, 1));
+		int aboveBelowLeft = excludeLeft + Math.max(0, (excludeRight - excludeLeft - panelW) / 2);
 		candidates.add(new Candidate(aboveBelowLeft, excludeTop - BOOK_GAP - panelH, 2));
 		candidates.add(new Candidate(aboveBelowLeft, excludeBottom + BOOK_GAP, 3));
 
-		Candidate best = null;
+		Candidate bestClear = null;
+		Candidate bestAny = null;
+		int bestOverlap = Integer.MAX_VALUE;
 		for (Candidate c : candidates) {
-			// Reject candidates that need clamping into the exclusion rect.
-			if (c.left < minLeft || c.left > maxLeft || c.top < minTop || c.top > maxTop) {
-				continue;
+			int left = Mth.clamp(c.left, minLeft, maxLeft);
+			int top = Mth.clamp(c.top, minTop, maxTop);
+			int overlap = bookOverlapArea(left, top, panelW, panelH, excludeLeft, excludeTop, excludeRight, excludeBottom);
+			if (overlap == 0 && (bestClear == null || c.priority < bestClear.priority)) {
+				bestClear = new Candidate(left, top, c.priority);
 			}
-			int left = c.left;
-			int top = c.top;
-			// Collision rect includes tab overhang to the left of the panel.
-			int colLeft = left - BOOK_TAB_OVERHANG;
-			int colRight = left + panelW;
-			int colTop = top;
-			int colBottom = top + panelH;
-			if (rectsOverlap(colLeft, colTop, colRight, colBottom, excludeLeft, excludeTop, excludeRight, excludeBottom)) {
-				continue;
-			}
-			if (best == null || c.priority < best.priority) {
-				best = new Candidate(left, top, c.priority);
+			if (bestAny == null || overlap < bestOverlap || (overlap == bestOverlap && c.priority < bestAny.priority)) {
+				bestOverlap = overlap;
+				bestAny = new Candidate(left, top, c.priority);
 			}
 		}
 
-		if (best != null) {
-			bookLeft = best.left;
-			bookTop = best.top;
-			return true;
+		Candidate chosen = bestClear != null ? bestClear : bestAny;
+		if (chosen == null) {
+			return false;
 		}
-
-		return false;
+		bookLeft = chosen.left;
+		bookTop = chosen.top;
+		return true;
 	}
 
-	private static boolean rectsOverlap(int aL, int aT, int aR, int aB, int bL, int bT, int bR, int bB) {
-		return aL < bR && aR > bL && aT < bB && aB > bT;
+	/** Overlap of the green panel (not the off-screen category tabs) with the storage GUI. */
+	private static int bookOverlapArea(int left, int top, int panelW, int panelH, int exL, int exT, int exR, int exB) {
+		int overlapLeft = Math.max(left, exL);
+		int overlapTop = Math.max(top, exT);
+		int overlapRight = Math.min(left + panelW, exR);
+		int overlapBottom = Math.min(top + panelH, exB);
+		if (overlapLeft >= overlapRight || overlapTop >= overlapBottom) {
+			return 0;
+		}
+		return (overlapRight - overlapLeft) * (overlapBottom - overlapTop);
 	}
 
 	private void initRecipeBook() {
@@ -272,18 +277,19 @@ public class AdvancedCraftingUpgradeTab extends UpgradeSettingsTab<CraftingUpgra
 		if (recipeToggleButton != null) {
 			recipeToggleButton.render(guiGraphics, mouseX, mouseY, partialTicks);
 		}
-		if (bookVisible && recipeBook.isVisible()) {
-			recipeBook.render(guiGraphics, mouseX, mouseY, partialTicks);
-			recipeBook.renderGhostRecipe(guiGraphics, screen.getGuiLeft(), screen.getGuiTop(), true, partialTicks);
-		}
 	}
 
-	@Override
-	public void renderTooltip(Screen screen, GuiGraphics guiGraphics, int mouseX, int mouseY) {
-		super.renderTooltip(screen, guiGraphics, mouseX, mouseY);
-		if (isOpen && bookVisible && recipeBook.isVisible()) {
-			recipeBook.renderTooltip(guiGraphics, this.screen.getGuiLeft(), this.screen.getGuiTop(), mouseX, mouseY);
+	/**
+	 * Drawn from {@code ScreenEvent.Render.Post}. The upgrade tab itself is rendered before
+	 * backpack slots, so drawing the book there puts slots and JEI-adjacent UI on top of it.
+	 */
+	public void renderRecipeBook(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+		if (!isOpen || !getContainer().isOpen() || !bookVisible || !recipeBook.isVisible()) {
+			return;
 		}
+		recipeBook.render(guiGraphics, mouseX, mouseY, partialTicks);
+		recipeBook.renderGhostRecipe(guiGraphics, screen.getGuiLeft(), screen.getGuiTop(), true, partialTicks);
+		recipeBook.renderTooltip(guiGraphics, screen.getGuiLeft(), screen.getGuiTop(), mouseX, mouseY);
 	}
 
 	/**

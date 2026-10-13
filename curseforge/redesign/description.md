@@ -14,16 +14,19 @@ Click a recipe and the grid fills from the backpack or chest **and** from your o
 
 One jar covers both mods and replaces the separate backpack and storage versions. Install it next to whichever Sophisticated mods you already use. 🧩
 
+**🆕 New in 1.0.6:** the green recipe book now opens even when the backpack fills the screen, as on short GUI scales or ultrawide monitors with auto GUI scale. It is built for the latest Sophisticated Core 1.5.7, Backpacks 3.26.9 and Storage 1.6.2.
+
 ![divider](https://raw.githubusercontent.com/Renzolc/sophisticated-advanced-crafting/main/curseforge/redesign/divider-sophisticated-advanced-crafting.png)
 
 ## 📚 FEATURES
 
 - 🔀 **Dual-source crafting:** The recipe book in the upgrade tab places ingredients from the container and your inventory at once.
 - 🪵 **World crafting tables:** With the backpack upgrade in your backpack, the recipe book at a regular crafting table can use the backpack's items.
-- 📗 **Floating recipe book:** Opens in the free space beside the screen (right, then left, above or below) and never covers storage slots, your inventory or the hotbar. Closed by default.
+- 📗 **Floating recipe book:** Opens in the free space beside the screen and never covers storage slots, your inventory or the hotbar. Closed by default. The green toggle sits off the craft grid.
+- 📐 **Works on any GUI scale:** When the backpack fills the window, the book opens to the left of the backpack, clear of JEI, and its category tabs may run off the screen edge. It draws above the backpack slots so it stays clickable.
 - 🎒 **Two upgrades:** The backpack version needs Sophisticated Backpacks and the storage version needs Sophisticated Storage. You only get the ones whose mod is installed.
 - 🎨 **Easy to tell apart:** The backpack upgrade has a copper and gold icon, the storage upgrade a wood and gold one.
-- 💎 **Simple recipe:** 1 diamond, 2 gold ingots, 3 redstone and the matching stock Crafting Upgrade.
+- 💎 **Simple shaped recipe:** a diamond on top, gold ingot, stock Crafting Upgrade, gold ingot in the middle, and 3 redstone along the bottom.
 - ⚠️ **One crafting upgrade per container:** It can't sit in the same backpack or storage as the stock Crafting Upgrade.
 
 ![divider](https://raw.githubusercontent.com/Renzolc/sophisticated-advanced-crafting/main/curseforge/redesign/divider-sophisticated-advanced-crafting.png)
@@ -40,13 +43,13 @@ One jar covers both mods and replaces the separate backpack and storage versions
 
 ## 📦 INSTALLATION
 
-**⏩ INSTALL ON BOTH CLIENT AND SERVER (NEOFORGE 1.21.1)**
+**⏩ INSTALL ON BOTH CLIENT AND SERVER (MINECRAFT 1.21.1, NEOFORGE 21.1.251 OR NEWER)**
 
-**⏩ REQUIRES [SOPHISTICATED CORE](https://www.curseforge.com/minecraft/mc-mods/sophisticated-core) 1.5.1 OR NEWER**
+**⏩ REQUIRES [SOPHISTICATED CORE](https://www.curseforge.com/minecraft/mc-mods/sophisticated-core) (BUILT AGAINST 1.5.7)**
 
-**⏩ OPTIONAL: [SOPHISTICATED BACKPACKS](https://www.curseforge.com/minecraft/mc-mods/sophisticated-backpacks) 3.24 OR NEWER, FOR THE BACKPACK UPGRADE**
+**⏩ OPTIONAL: [SOPHISTICATED BACKPACKS](https://www.curseforge.com/minecraft/mc-mods/sophisticated-backpacks) (BUILT AGAINST 3.26.9), FOR THE BACKPACK UPGRADE**
 
-**⏩ OPTIONAL: [SOPHISTICATED STORAGE](https://www.curseforge.com/minecraft/mc-mods/sophisticated-storage) 1.4 OR NEWER, FOR THE STORAGE UPGRADE**
+**⏩ OPTIONAL: [SOPHISTICATED STORAGE](https://www.curseforge.com/minecraft/mc-mods/sophisticated-storage) (BUILT AGAINST 1.6.2), FOR THE STORAGE UPGRADE**
 
 Install at least one of Sophisticated Backpacks or Sophisticated Storage, or there is nothing to upgrade.
 

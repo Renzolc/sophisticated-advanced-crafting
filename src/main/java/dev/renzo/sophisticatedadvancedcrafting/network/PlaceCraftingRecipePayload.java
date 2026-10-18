@@ -56,7 +56,7 @@ public record PlaceCraftingRecipePayload(int displayId, boolean maxTransfer) imp
 				return;
 			}
 
-			RecipeManager.ServerDisplayInfo info = serverPlayer.serverLevel().recipeAccess().getRecipeFromDisplay(new RecipeDisplayId(payload.displayId()));
+			RecipeManager.ServerDisplayInfo info = serverPlayer.level().recipeAccess().getRecipeFromDisplay(new RecipeDisplayId(payload.displayId()));
 			if (info == null) {
 				return;
 			}

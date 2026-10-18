@@ -295,10 +295,10 @@ public class AdvancedCraftingUpgradeTab extends UpgradeSettingsTab<CraftingUpgra
 		}
 		recipeBook.render(guiGraphics, mouseX, mouseY, partialTicks);
 		// Ghost slots use upgrade-grid coordinates, which are relative to the storage screen origin.
-		guiGraphics.pose().pushPose();
-		guiGraphics.pose().translate(screen.getGuiLeft(), screen.getGuiTop(), 0);
+		guiGraphics.pose().pushMatrix();
+		guiGraphics.pose().translate(screen.getGuiLeft(), screen.getGuiTop());
 		recipeBook.renderGhostRecipe(guiGraphics, true);
-		guiGraphics.pose().popPose();
+		guiGraphics.pose().popMatrix();
 		recipeBook.renderTooltip(guiGraphics, mouseX, mouseY, null);
 	}
 

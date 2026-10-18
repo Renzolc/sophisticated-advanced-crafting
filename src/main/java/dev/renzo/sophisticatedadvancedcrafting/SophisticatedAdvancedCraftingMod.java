@@ -11,6 +11,8 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.loading.FMLEnvironment;
+
+import java.lang.reflect.Method;
 import org.slf4j.Logger;
 
 @Mod(SophisticatedAdvancedCraftingMod.MOD_ID)
@@ -39,9 +41,26 @@ public class SophisticatedAdvancedCraftingMod {
 		}
 
 		modBus.addListener(ModNetwork::register);
+		registerDevCheck(modBus);
 		if (FMLEnvironment.dist == Dist.CLIENT) {
 			ClientSetup.init(modBus);
 		}
 		LOGGER.info("Sophisticated Advanced Crafting loaded");
+	}
+
+	/**
+	 * Loads the dev-only mixin proof when that class is on the runtime classpath.
+	 * Production jars do not contain it, so the lookup misses and this is a no-op.
+	 */
+	private static void registerDevCheck(IEventBus modBus) {
+		try {
+			Class<?> type = Class.forName("dev.renzo.sophisticatedadvancedcrafting.devcheck.MixinApplyCheck");
+			Method register = type.getMethod("register", IEventBus.class);
+			register.invoke(null, modBus);
+		} catch (ClassNotFoundException ignored) {
+			// Shipped jar has no devcheck source set.
+		} catch (ReflectiveOperationException e) {
+			throw new IllegalStateException("SAC devcheck failed to register", e);
+		}
 	}
 }

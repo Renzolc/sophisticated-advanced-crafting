@@ -39,3 +39,22 @@ No source changes. `CompoundTag` Optional getters and `Item.appendHoverText(Tool
 - `gradlew clean build` succeeded. Jar `sophisticated_advanced_crafting-1.0.6-mc1.21.5.jar` (57024 bytes). The devcheck package is not in the jar.
 - Dedicated server: `Done (3.918s)! For help, type "help"`. Log line `SAC devcheck: mixins applied (server)`. No mixin, registry, datapack, or recipe errors from this mod. A Sophisticated Backpacks message `No loader defined for swords` is not from this mod. Offline-mode warning is not from this mod.
 - Client: resource reload included `mod/sophisticated_advanced_crafting`, then `Sound engine started`. Log line `SAC devcheck: mixins applied (client)`. No mixin or mod errors. A Realms feature-flag fetch error is not from this mod. Client process was stopped after the main menu.
+
+## 1.21.8
+
+NeoForge 21.8.54, Java 21, Parchment 1.21.8 / 2025.09.14, ModDevGradle 2.0.147.
+Sophisticated Core 1.21.8-1.5.1.2344 (mods.toml version 1.5.1, NeoForge `[21.6.0,21.9.0)`),
+Backpacks 1.21.8-3.26.3.2163 (version 3.26.3), Storage 1.21.8-1.6.0.2140 (version 1.6.0).
+21.8.54 sits inside that range, so no NeoForge bump.
+
+- Client packets use `ClientPacketDistributor.sendToServer`. `PacketDistributor.sendToServer` is gone.
+- `ServerPlayer.serverLevel()` is `level()`.
+- GUI pose stacks are `Matrix3x2fStack`: `pushMatrix` / `popMatrix`, and `translate(float, float)`.
+- `@EventBusSubscriber` no longer has a mod-bus selector. The dev check registers with `IEventBus.addListener` through reflection from the mod constructor, and it is still absent from the jar.
+- Mixin targets `ServerPlaceRecipe.tryPlaceRecipe`, `moveItemToGrid`, and `RecipeBookComponent` stacked-contents hooks are unchanged.
+
+## Tests
+
+- `gradlew clean build` succeeded. Jar `sophisticated_advanced_crafting-1.0.6-mc1.21.8.jar` (57504 bytes). The devcheck package is not in the jar.
+- Dedicated server: `Done (4.725s)! For help, type "help"`. Log line `SAC devcheck: mixins applied (server)`. No mixin, registry, datapack, or recipe errors from this mod. A Sophisticated Backpacks message `No loader defined for swords` is not from this mod.
+- Client: resource reload included `mod/sophisticated_advanced_crafting`, then `Sound engine started`. Log line `SAC devcheck: mixins applied (client)`. No mixin or mod errors. Client process was stopped after the main menu.

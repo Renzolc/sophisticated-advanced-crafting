@@ -11,7 +11,7 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.display.RecipeDisplayEntry;
 import net.minecraft.world.item.crafting.display.RecipeDisplayId;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.p3pp3rf1y.sophisticatedcore.common.gui.StorageContainerMenuBase;
 
 /**
@@ -143,7 +143,7 @@ public class DualSourceRecipeBookComponent extends CraftingRecipeBookComponent {
 				}
 			}
 		}
-		PacketDistributor.sendToServer(new PlaceCraftingRecipePayload(id.index(), Screen.hasShiftDown()));
+		ClientPacketDistributor.sendToServer(new PlaceCraftingRecipePayload(id.index(), Screen.hasShiftDown()));
 		return true;
 	}
 

@@ -2,22 +2,25 @@ package dev.renzo.sophisticatedadvancedcrafting.devcheck;
 
 import dev.renzo.sophisticatedadvancedcrafting.SophisticatedAdvancedCraftingMod;
 import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.fml.loading.FMLEnvironment;
 
 /**
  * Dev-run only. Confirms mixin targets load and the injected hooks exist.
  * This source set is not packaged into the mod jar.
+ * Registered from the mod constructor by reflection, because {@code @EventBusSubscriber}
+ * no longer selects the mod bus.
  */
-@EventBusSubscriber(modid = SophisticatedAdvancedCraftingMod.MOD_ID, bus = EventBusSubscriber.Bus.MOD)
 public final class MixinApplyCheck {
 	private MixinApplyCheck() {
 	}
 
-	@SubscribeEvent
-	public static void onCommonSetup(FMLCommonSetupEvent event) {
+	public static void register(IEventBus modBus) {
+		modBus.addListener(MixinApplyCheck::onCommonSetup);
+	}
+
+	private static void onCommonSetup(FMLCommonSetupEvent event) {
 		event.enqueueWork(MixinApplyCheck::verify);
 	}
 

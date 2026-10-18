@@ -24,3 +24,18 @@ No NeoForge bump was required.
 - `gradlew clean build` succeeded. Jar `sophisticated_advanced_crafting-1.0.6-mc1.21.4.jar` (57026 bytes). The devcheck package is not in the jar.
 - Dedicated server: `Done (4.175s)! For help, type "help"`. Log line `SAC devcheck: mixins applied (server)`. No mixin, registry, datapack, or recipe errors from this mod. Vanilla command-ambiguity warnings and the offline-mode warning are not from this mod.
 - Client: resource reload included `mod/sophisticated_advanced_crafting`, then `Sound engine started`. Log line `SAC devcheck: mixins applied (client)`, which loaded `ServerPlaceRecipe`, `CraftingMenu`, `RecipeBookComponent` (hook `sac$initVisuals`), `CraftingRecipeBookComponent`, and `RecipeBookPage`. Runs also set `mixin.debug.verify` and `mixin.checks.interfaces`. No mixin or mod errors. Client process was stopped after the main menu.
+
+## 1.21.5
+
+NeoForge 21.5.98, Java 21, Parchment 1.21.5 / 2025.06.15, ModDevGradle 2.0.147.
+Sophisticated Core 1.21.5-1.5.2.2345 (mods.toml version 1.5.2, NeoForge `[21.5.0,)`),
+Backpacks 1.21.5-3.27.3.2164 (version 3.27.3), Storage 1.21.5-1.6.0.2139 (version 1.6.0).
+No NeoForge bump was required. Our version ranges `[1.5.1,)`, `[3.24,)`, and `[1.4,)` accept these jars.
+
+No source changes. `CompoundTag` Optional getters and `Item.appendHoverText(TooltipDisplay, Consumer)` are unused here. `ServerPlaceRecipe` stays in `net.minecraft.recipebook` and still returns from `tryPlaceRecipe` / `moveItemToGrid`, so the existing injectors apply. `EventBusSubscriber.bus` is deprecated for removal and still required so the dev check runs on the mod bus.
+
+## Tests
+
+- `gradlew clean build` succeeded. Jar `sophisticated_advanced_crafting-1.0.6-mc1.21.5.jar` (57024 bytes). The devcheck package is not in the jar.
+- Dedicated server: `Done (3.918s)! For help, type "help"`. Log line `SAC devcheck: mixins applied (server)`. No mixin, registry, datapack, or recipe errors from this mod. A Sophisticated Backpacks message `No loader defined for swords` is not from this mod. Offline-mode warning is not from this mod.
+- Client: resource reload included `mod/sophisticated_advanced_crafting`, then `Sound engine started`. Log line `SAC devcheck: mixins applied (client)`. No mixin or mod errors. A Realms feature-flag fetch error is not from this mod. Client process was stopped after the main menu.

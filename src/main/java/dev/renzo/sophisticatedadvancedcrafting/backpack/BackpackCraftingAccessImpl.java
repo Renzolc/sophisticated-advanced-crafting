@@ -10,6 +10,8 @@ import net.minecraft.world.item.ItemStack;
 import net.p3pp3rf1y.sophisticatedbackpacks.backpack.wrapper.BackpackWrapper;
 import net.p3pp3rf1y.sophisticatedbackpacks.backpack.wrapper.IBackpackWrapper;
 import net.p3pp3rf1y.sophisticatedbackpacks.util.PlayerInventoryProvider;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
 import net.p3pp3rf1y.sophisticatedcore.inventory.InventoryHandler;
 import net.p3pp3rf1y.sophisticatedcore.upgrades.IUpgradeWrapper;
 import net.p3pp3rf1y.sophisticatedcore.upgrades.UpgradeHandler;
@@ -60,7 +62,7 @@ public final class BackpackCraftingAccessImpl {
 				return false;
 			}
 			InventoryHandler inv = BackpackWrapper.fromStack(backpack).getInventoryHandler();
-			for (int i = 0; i < inv.getSlots(); i++) {
+			for (int i = 0; i < inv.size(); i++) {
 				ItemStack stack = inv.getStackInSlot(i);
 				if (!stack.isEmpty()) {
 					contents.accountSimpleStack(stack);
@@ -87,12 +89,12 @@ public final class BackpackCraftingAccessImpl {
 				return rem[0] <= 0;
 			}
 			InventoryHandler inv = BackpackWrapper.fromStack(backpack).getInventoryHandler();
-			for (int i = 0; i < inv.getSlots() && rem[0] > 0; i++) {
+			for (int i = 0; i < inv.size() && rem[0] > 0; i++) {
 				ItemStack inSlot = inv.getStackInSlot(i);
 				if (!matches(inSlot, item, existing)) {
 					continue;
 				}
-				ItemStack extracted = inv.extractItem(i, rem[0], false);
+				ItemStack extracted = extractFromSlot(inv, i, inSlot, rem[0]);
 				if (extracted.isEmpty()) {
 					continue;
 				}
@@ -106,6 +108,36 @@ public final class BackpackCraftingAccessImpl {
 			return rem[0] <= 0;
 		});
 		return out[0];
+	}
+
+	private static ItemStack extractFromSlot(InventoryHandler inv, int slot, ItemStack inSlot, int amount) {
+		ItemResource resource = ItemResource.of(inSlot);
+		try (Transaction transaction = Transaction.openRoot()) {
+			int extracted = inv.extract(slot, resource, amount, transaction);
+			if (extracted <= 0) {
+				return ItemStack.EMPTY;
+			}
+			transaction.commit();
+			return resource.toStack(extracted);
+		}
+	}
+
+	/** Inserts into one slot. The returned stack is the uninserted remainder. */
+	private static ItemStack insertIntoSlot(InventoryHandler inv, int slot, ItemStack stack) {
+		ItemResource resource = ItemResource.of(stack);
+		try (Transaction transaction = Transaction.openRoot()) {
+			int inserted = inv.insert(slot, resource, stack.getCount(), transaction);
+			if (inserted <= 0) {
+				return stack;
+			}
+			transaction.commit();
+			if (inserted >= stack.getCount()) {
+				return ItemStack.EMPTY;
+			}
+			ItemStack remainder = stack.copy();
+			remainder.shrink(inserted);
+			return remainder;
+		}
 	}
 
 	private static boolean matches(ItemStack inSlot, Holder<Item> item, ItemStack existing) {
@@ -126,8 +158,8 @@ public final class BackpackCraftingAccessImpl {
 				return remaining[0].isEmpty();
 			}
 			InventoryHandler inv = BackpackWrapper.fromStack(backpack).getInventoryHandler();
-			for (int i = 0; i < inv.getSlots() && !remaining[0].isEmpty(); i++) {
-				remaining[0] = inv.insertItem(i, remaining[0], false);
+			for (int i = 0; i < inv.size() && !remaining[0].isEmpty(); i++) {
+				remaining[0] = insertIntoSlot(inv, i, remaining[0]);
 			}
 			return remaining[0].isEmpty();
 		});

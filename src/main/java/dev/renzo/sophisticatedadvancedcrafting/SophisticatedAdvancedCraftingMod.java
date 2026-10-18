@@ -42,7 +42,7 @@ public class SophisticatedAdvancedCraftingMod {
 
 		modBus.addListener(ModNetwork::register);
 		registerDevCheck(modBus);
-		if (FMLEnvironment.dist == Dist.CLIENT) {
+		if (FMLEnvironment.getDist() == Dist.CLIENT) {
 			ClientSetup.init(modBus);
 		}
 		LOGGER.info("Sophisticated Advanced Crafting loaded");

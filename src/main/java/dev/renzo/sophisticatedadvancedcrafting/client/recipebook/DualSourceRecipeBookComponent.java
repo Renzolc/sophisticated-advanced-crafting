@@ -3,7 +3,6 @@ package dev.renzo.sophisticatedadvancedcrafting.client.recipebook;
 import dev.renzo.sophisticatedadvancedcrafting.mixin.RecipeBookComponentAccess;
 import dev.renzo.sophisticatedadvancedcrafting.network.PlaceCraftingRecipePayload;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.recipebook.CraftingRecipeBookComponent;
 import net.minecraft.client.gui.screens.recipebook.RecipeCollection;
 import net.minecraft.world.entity.player.StackedItemContents;
@@ -128,7 +127,7 @@ public class DualSourceRecipeBookComponent extends CraftingRecipeBookComponent {
 	 * Called from the recipe-book mixin in place of {@code GameMode.handlePlaceRecipe},
 	 * which always targets {@code player.containerMenu}.
 	 */
-	public boolean placeFromBook(RecipeCollection collection, RecipeDisplayId id) {
+	public boolean placeFromBook(RecipeCollection collection, RecipeDisplayId id, boolean maxTransfer) {
 		if (!collection.isCraftable(id) && id.equals(this.lastPlaced)) {
 			return false;
 		}
@@ -143,7 +142,7 @@ public class DualSourceRecipeBookComponent extends CraftingRecipeBookComponent {
 				}
 			}
 		}
-		ClientPacketDistributor.sendToServer(new PlaceCraftingRecipePayload(id.index(), Screen.hasShiftDown()));
+		ClientPacketDistributor.sendToServer(new PlaceCraftingRecipePayload(id.index(), maxTransfer));
 		return true;
 	}
 

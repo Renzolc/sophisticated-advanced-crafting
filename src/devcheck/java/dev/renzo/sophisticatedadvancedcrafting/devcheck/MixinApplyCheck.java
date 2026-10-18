@@ -25,10 +25,10 @@ public final class MixinApplyCheck {
 	}
 
 	private static void verify() {
-		String side = FMLEnvironment.dist == Dist.CLIENT ? "client" : "server";
+		String side = FMLEnvironment.getDist() == Dist.CLIENT ? "client" : "server";
 		requireMethod("net.minecraft.recipebook.ServerPlaceRecipe", "sophisticatedAdvancedCrafting$mixinApplied");
 		requireClass("net.minecraft.world.inventory.CraftingMenu");
-		if (FMLEnvironment.dist == Dist.CLIENT) {
+		if (FMLEnvironment.getDist() == Dist.CLIENT) {
 			requireMethod("net.minecraft.client.gui.screens.recipebook.RecipeBookComponent", "sac$initVisuals");
 			requireClass("net.minecraft.client.gui.screens.recipebook.CraftingRecipeBookComponent");
 			requireClass("net.minecraft.client.gui.screens.recipebook.RecipeBookPage");

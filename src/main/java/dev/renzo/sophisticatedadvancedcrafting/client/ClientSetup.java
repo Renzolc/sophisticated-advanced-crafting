@@ -37,7 +37,7 @@ public final class ClientSetup {
 
 	private static void onKeyPressed(ScreenEvent.KeyPressed.Pre event) {
 		findOpenAdvancedTab(event.getScreen()).ifPresent(tab -> {
-			if (tab.handleKeyPressed(event.getKeyCode(), event.getScanCode(), event.getModifiers())) {
+			if (tab.handleKeyPressed(event.getKeyEvent())) {
 				event.setCanceled(true);
 			}
 		});
@@ -45,7 +45,7 @@ public final class ClientSetup {
 
 	private static void onCharTyped(ScreenEvent.CharacterTyped.Pre event) {
 		findOpenAdvancedTab(event.getScreen()).ifPresent(tab -> {
-			if (tab.handleCharTyped(event.getCodePoint(), event.getModifiers())) {
+			if (tab.handleCharTyped(event.getCharacterEvent())) {
 				event.setCanceled(true);
 			}
 		});
@@ -57,7 +57,7 @@ public final class ClientSetup {
 	 */
 	private static void onMouseClicked(ScreenEvent.MouseButtonPressed.Pre event) {
 		findOpenAdvancedTab(event.getScreen()).ifPresent(tab -> {
-			if (tab.handleRecipeBookMouseClicked(event.getMouseX(), event.getMouseY(), event.getButton())) {
+			if (tab.handleRecipeBookMouseClicked(event.getMouseButtonEvent(), event.isDoubleClick())) {
 				event.setCanceled(true);
 			}
 		});

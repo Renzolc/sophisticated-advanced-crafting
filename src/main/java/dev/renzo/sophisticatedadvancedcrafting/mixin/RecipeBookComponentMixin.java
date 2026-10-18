@@ -42,9 +42,9 @@ public abstract class RecipeBookComponentMixin {
 	}
 
 	@Inject(method = "tryPlaceRecipe", at = @At("HEAD"), cancellable = true)
-	private void sophisticatedAdvancedCrafting$placeDualSource(RecipeCollection collection, RecipeDisplayId id, CallbackInfoReturnable<Boolean> cir) {
+	private void sophisticatedAdvancedCrafting$placeDualSource(RecipeCollection collection, RecipeDisplayId id, boolean maxTransfer, CallbackInfoReturnable<Boolean> cir) {
 		if ((Object) this instanceof DualSourceRecipeBookComponent dual) {
-			cir.setReturnValue(dual.placeFromBook(collection, id));
+			cir.setReturnValue(dual.placeFromBook(collection, id, maxTransfer));
 		}
 	}
 }

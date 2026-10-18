@@ -58,3 +58,22 @@ Backpacks 1.21.8-3.26.3.2163 (version 3.26.3), Storage 1.21.8-1.6.0.2140 (versio
 - `gradlew clean build` succeeded. Jar `sophisticated_advanced_crafting-1.0.6-mc1.21.8.jar` (57504 bytes). The devcheck package is not in the jar.
 - Dedicated server: `Done (4.725s)! For help, type "help"`. Log line `SAC devcheck: mixins applied (server)`. No mixin, registry, datapack, or recipe errors from this mod. A Sophisticated Backpacks message `No loader defined for swords` is not from this mod.
 - Client: resource reload included `mod/sophisticated_advanced_crafting`, then `Sound engine started`. Log line `SAC devcheck: mixins applied (client)`. No mixin or mod errors. Client process was stopped after the main menu.
+
+## 1.21.10
+
+NeoForge 21.10.64, Java 21, Parchment 1.21.10 / 2025.10.12, ModDevGradle 2.0.147.
+Sophisticated Core 1.21.10-1.5.1.2351 (mods.toml version 1.5.1, NeoForge `[21.10.0,21.11.0)`),
+Backpacks 1.21.10-3.26.3.2165 (version 3.26.3), Storage 1.21.10-1.5.103.2141 (version 1.5.103).
+21.10.64 sits inside that range, so no NeoForge bump. Storage's mods.toml version dropped to 1.5.103; `[1.4,)` still accepts it.
+
+- `FMLEnvironment.dist` is `getDist()`.
+- GUI input is `MouseButtonEvent`, `KeyEvent`, and `CharacterEvent`. `mouseClicked` is `(MouseButtonEvent, boolean)`. Shift-click is `hasShiftDown()` on the event, passed into `RecipeBookComponent.tryPlaceRecipe` as a third boolean. The upgrade tab forwards that flag as max-transfer.
+- `Screen.hasShiftDown()` is `Minecraft.hasShiftDown()`.
+- Backpack inventory is the NeoForge transfer API. `InventoryHandler.size()`, `extract(slot, ItemResource, amount, Transaction)`, and `insert(...)` replace `getSlots` / `extractItem` / `insertItem`. Root transactions are committed only when items actually move.
+- Items register with the two-argument `registerItem` (id is applied by the deferred register).
+
+## Tests
+
+- `gradlew clean build` succeeded. Jar `sophisticated_advanced_crafting-1.0.6-mc1.21.10.jar` (58187 bytes). The devcheck package is not in the jar.
+- Dedicated server: `Done (1.793s)! For help, type "help"`. Log line `SAC devcheck: mixins applied (server)`. No mixin, registry, datapack, or recipe errors from this mod. A Sophisticated Backpacks message `No loader defined for swords` is not from this mod.
+- Client: resource reload included `mod/sophisticated_advanced_crafting`, then `Sound engine started`. Log line `SAC devcheck: mixins applied (client)`. No mixin or mod errors. Client process was stopped after the main menu.

@@ -4,6 +4,9 @@ import dev.renzo.sophisticatedadvancedcrafting.client.recipebook.DualSourceRecip
 import dev.renzo.sophisticatedadvancedcrafting.client.recipebook.DualSourceRecipeBookMenu;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.gui.screens.recipebook.RecipeBookComponent;
 import net.minecraft.network.chat.Component;
@@ -306,27 +309,27 @@ public class AdvancedCraftingUpgradeTab extends UpgradeSettingsTab<CraftingUpgra
 	 * Screen-level mouse forwarding for the floating book (may sit outside this tab's widget bounds).
 	 * Does not route through {@link #mouseClicked} so craft-grid slot clicks are not stolen.
 	 */
-	public boolean handleRecipeBookMouseClicked(double mouseX, double mouseY, int button) {
-		return recipeBook != null && isOpen && bookVisible && recipeBook.isVisible() && recipeBook.mouseClicked(mouseX, mouseY, button);
+	public boolean handleRecipeBookMouseClicked(MouseButtonEvent event, boolean doubleClick) {
+		return recipeBook != null && isOpen && bookVisible && recipeBook.isVisible() && recipeBook.mouseClicked(event, doubleClick);
 	}
 
 	@Override
-	public boolean mouseClicked(double mouseX, double mouseY, int button) {
-		if (isOpen && recipeToggleButton != null && recipeToggleButton.mouseClicked(mouseX, mouseY, button)) {
+	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+		if (isOpen && recipeToggleButton != null && recipeToggleButton.mouseClicked(event, doubleClick)) {
 			return true;
 		}
-		if (handleRecipeBookMouseClicked(mouseX, mouseY, button)) {
+		if (handleRecipeBookMouseClicked(event, doubleClick)) {
 			return true;
 		}
-		return super.mouseClicked(mouseX, mouseY, button);
+		return super.mouseClicked(event, doubleClick);
 	}
 
-	public boolean handleKeyPressed(int keyCode, int scanCode, int modifiers) {
-		return recipeBook != null && isOpen && bookVisible && recipeBook.isVisible() && recipeBook.keyPressed(keyCode, scanCode, modifiers);
+	public boolean handleKeyPressed(KeyEvent event) {
+		return recipeBook != null && isOpen && bookVisible && recipeBook.isVisible() && recipeBook.keyPressed(event);
 	}
 
-	public boolean handleCharTyped(char codePoint, int modifiers) {
-		return recipeBook != null && isOpen && bookVisible && recipeBook.isVisible() && recipeBook.charTyped(codePoint, modifiers);
+	public boolean handleCharTyped(CharacterEvent event) {
+		return recipeBook != null && isOpen && bookVisible && recipeBook.isVisible() && recipeBook.charTyped(event);
 	}
 
 	@Override

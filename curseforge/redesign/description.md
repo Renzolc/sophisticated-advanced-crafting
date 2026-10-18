@@ -8,13 +8,15 @@
 
 ## 📖 ABOUT
 
-**Sophisticated Advanced Crafting** adds an **Advanced Crafting Upgrade** for Sophisticated Backpacks and for Sophisticated Storage on NeoForge 1.21.1. Like the stock Crafting Upgrade it gives the container a crafting tab, with a recipe book that can use what's inside. 🎒
+**Sophisticated Advanced Crafting** adds an **Advanced Crafting Upgrade** for Sophisticated Backpacks and for Sophisticated Storage on NeoForge. Like the stock Crafting Upgrade it gives the container a crafting tab, with a recipe book that can use what's inside. 🎒
 
 Click a recipe and the grid fills from the backpack or chest **and** from your own inventory together. With the backpack upgrade, crafting tables in the world can pull from your backpack too. 🛠️
 
 One jar covers both mods and replaces the separate backpack and storage versions. Install it next to whichever Sophisticated mods you already use. 🧩
 
-**🆕 New in 1.0.6:** the green recipe book now opens even when the backpack fills the screen, as on short GUI scales or ultrawide monitors with auto GUI scale. It is built for the latest Sophisticated Core 1.5.7, Backpacks 3.26.9 and Storage 1.6.2.
+It runs on **Minecraft 1.21.1, 1.21.4, 1.21.5, 1.21.8, 1.21.10, 1.21.11, 26.1.2 and 26.2**, with a matching NeoForge file for each version. 🗂️
+
+**🆕 New in 1.0.6:** the green recipe book now opens even when the backpack fills the screen, as on short GUI scales or ultrawide monitors with auto GUI scale. On 1.21.1 it is built for Sophisticated Core 1.5.7, Backpacks 3.26.9 and Storage 1.6.2. The 1.0.6 update is out for every supported version.
 
 ![divider](https://raw.githubusercontent.com/Renzolc/sophisticated-advanced-crafting/main/curseforge/redesign/divider-sophisticated-advanced-crafting.png)
 
@@ -43,15 +45,19 @@ One jar covers both mods and replaces the separate backpack and storage versions
 
 ## 📦 INSTALLATION
 
-**⏩ INSTALL ON BOTH CLIENT AND SERVER (MINECRAFT 1.21.1, NEOFORGE 21.1.251 OR NEWER)**
+**⏩ INSTALL ON BOTH CLIENT AND SERVER (NEOFORGE)**
 
-**⏩ REQUIRES [SOPHISTICATED CORE](https://www.curseforge.com/minecraft/mc-mods/sophisticated-core) (BUILT AGAINST 1.5.7)**
+**⏩ MINECRAFT 1.21.1, 1.21.4, 1.21.5, 1.21.8, 1.21.10, 1.21.11, 26.1.2 AND 26.2. PICK THE FILE FOR YOUR VERSION**
 
-**⏩ OPTIONAL: [SOPHISTICATED BACKPACKS](https://www.curseforge.com/minecraft/mc-mods/sophisticated-backpacks) (BUILT AGAINST 3.26.9), FOR THE BACKPACK UPGRADE**
+**⏩ REQUIRES [SOPHISTICATED CORE](https://www.curseforge.com/minecraft/mc-mods/sophisticated-core) FOR YOUR MINECRAFT VERSION (1.21.1 FILE BUILT AGAINST 1.5.7)**
 
-**⏩ OPTIONAL: [SOPHISTICATED STORAGE](https://www.curseforge.com/minecraft/mc-mods/sophisticated-storage) (BUILT AGAINST 1.6.2), FOR THE STORAGE UPGRADE**
+**⏩ OPTIONAL: [SOPHISTICATED BACKPACKS](https://www.curseforge.com/minecraft/mc-mods/sophisticated-backpacks) (1.21.1 FILE BUILT AGAINST 3.26.9), FOR THE BACKPACK UPGRADE**
 
-Install at least one of Sophisticated Backpacks or Sophisticated Storage, or there is nothing to upgrade.
+**⏩ OPTIONAL: [SOPHISTICATED STORAGE](https://www.curseforge.com/minecraft/mc-mods/sophisticated-storage) (1.21.1 FILE BUILT AGAINST 1.6.2), FOR THE STORAGE UPGRADE**
+
+Install at least one of Sophisticated Backpacks or Sophisticated Storage, or there is nothing to upgrade. Each file's changelog lists the Sophisticated versions it was built against.
+
+Only the Minecraft 1.21.1 build has been thoroughly tested. If you find a bug on another version, please leave a comment with the Minecraft version, a screenshot, and a short description of the bug. 🐞
 
 ![divider](https://raw.githubusercontent.com/Renzolc/sophisticated-advanced-crafting/main/curseforge/redesign/divider-sophisticated-advanced-crafting.png)
 

@@ -77,3 +77,19 @@ Backpacks 1.21.10-3.26.3.2165 (version 3.26.3), Storage 1.21.10-1.5.103.2141 (ve
 - `gradlew clean build` succeeded. Jar `sophisticated_advanced_crafting-1.0.6-mc1.21.10.jar` (58187 bytes). The devcheck package is not in the jar.
 - Dedicated server: `Done (1.793s)! For help, type "help"`. Log line `SAC devcheck: mixins applied (server)`. No mixin, registry, datapack, or recipe errors from this mod. A Sophisticated Backpacks message `No loader defined for swords` is not from this mod.
 - Client: resource reload included `mod/sophisticated_advanced_crafting`, then `Sound engine started`. Log line `SAC devcheck: mixins applied (client)`. No mixin or mod errors. Client process was stopped after the main menu.
+
+## 1.21.11
+
+NeoForge 21.11.45, Java 21, Parchment 1.21.11 / 2025.12.20, ModDevGradle 2.0.147.
+Sophisticated Core 1.21.11-1.5.2.2348 (mods.toml version 1.5.2, NeoForge `[21.11.0,21.12.0)`),
+Backpacks 1.21.11-3.26.3.2168 (version 3.26.3), Storage 1.21.11-1.5.102.2142 (version 1.5.102).
+21.11.45 sits inside that range, so no NeoForge bump.
+
+- `ResourceLocation` is `Identifier`. The place-recipe payload type uses `Identifier.fromNamespaceAndPath`.
+- Recipe-book mixin targets are unchanged from 1.21.10 (`tryPlaceRecipe` still takes the shift boolean).
+
+## Tests
+
+- `gradlew clean build` succeeded. Jar `sophisticated_advanced_crafting-1.0.6-mc1.21.11.jar` (58194 bytes). The devcheck package is not in the jar.
+- Dedicated server: `Done (1.980s)! For help, type "help"`. Log line `SAC devcheck: mixins applied (server)`. No mixin, registry, datapack, or recipe errors from this mod.
+- Client: resource reload included `mod/sophisticated_advanced_crafting`, then `Sound engine started`. Log line `SAC devcheck: mixins applied (client)`. No mixin or mod errors. Client process was stopped after the main menu.

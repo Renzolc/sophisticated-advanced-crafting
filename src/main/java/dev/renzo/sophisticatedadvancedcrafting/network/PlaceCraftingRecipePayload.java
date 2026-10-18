@@ -7,7 +7,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
@@ -35,7 +35,7 @@ import java.util.Set;
  */
 public record PlaceCraftingRecipePayload(int displayId, boolean maxTransfer) implements CustomPacketPayload {
 	public static final Type<PlaceCraftingRecipePayload> TYPE = new Type<>(
-			ResourceLocation.fromNamespaceAndPath(SophisticatedAdvancedCraftingMod.MOD_ID, "place_crafting_recipe"));
+			Identifier.fromNamespaceAndPath(SophisticatedAdvancedCraftingMod.MOD_ID, "place_crafting_recipe"));
 
 	public static final StreamCodec<RegistryFriendlyByteBuf, PlaceCraftingRecipePayload> STREAM_CODEC = StreamCodec.composite(
 			ByteBufCodecs.VAR_INT, PlaceCraftingRecipePayload::displayId, ByteBufCodecs.BOOL, PlaceCraftingRecipePayload::maxTransfer,

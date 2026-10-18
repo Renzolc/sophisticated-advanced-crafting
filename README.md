@@ -1,6 +1,6 @@
 # Sophisticated Advanced Crafting
 
-NeoForge mod for Minecraft 1.21.10 that adds **Advanced Crafting Upgrades** for Sophisticated Backpacks and Sophisticated Storage.
+NeoForge mod for Minecraft 1.21.11 that adds **Advanced Crafting Upgrades** for Sophisticated Backpacks and Sophisticated Storage.
 
 One jar replaces the separate `sb-advanced-crafting` and `ss-advanced-crafting` mods.
 
@@ -23,8 +23,8 @@ Conflicts with the stock `CraftingUpgradeItem` in the same backpack/storage.
 
 ## Dependencies
 
-- **Required:** Minecraft 1.21.10, NeoForge 21.10.64+, Sophisticated Core 1.21.10-1.5.1.2351
-- **Optional:** Sophisticated Backpacks 1.21.10-3.26.3.2165, Sophisticated Storage 1.21.10-1.5.103.2141
+- **Required:** Minecraft 1.21.11, NeoForge 21.11.45+, Sophisticated Core 1.21.11-1.5.2.2348
+- **Optional:** Sophisticated Backpacks 1.21.11-3.26.3.2168, Sophisticated Storage 1.21.11-1.5.102.2142
 
 ## Build
 
@@ -32,7 +32,7 @@ Conflicts with the stock `CraftingUpgradeItem` in the same backpack/storage.
 ./gradlew build
 ```
 
-Jar: `build/libs/sophisticated_advanced_crafting-1.0.6-mc1.21.10.jar`
+Jar: `build/libs/sophisticated_advanced_crafting-1.0.6-mc1.21.11.jar`
 
 ## License
 

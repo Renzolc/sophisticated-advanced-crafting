@@ -3,7 +3,7 @@ package dev.renzo.sophisticatedadvancedcrafting.upgrade;
 import dev.renzo.sophisticatedadvancedcrafting.client.recipebook.DualSourceRecipeBookComponent;
 import dev.renzo.sophisticatedadvancedcrafting.client.recipebook.DualSourceRecipeBookMenu;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -156,10 +156,10 @@ public class AdvancedCraftingUpgradeTab extends UpgradeSettingsTab<CraftingUpgra
 		int screenW = mc.getWindow().getGuiScaledWidth();
 		int screenH = mc.getWindow().getGuiScaledHeight();
 
-		int excludeLeft = screen.getGuiLeft();
-		int excludeTop = screen.getGuiTop();
-		int excludeRight = Math.max(screen.getGuiLeft() + screen.getXSize(), x + Math.max(getWidth(), craftSectionWidth));
-		int excludeBottom = Math.max(screen.getGuiTop() + screen.getYSize(), y + openTabDimension.height());
+		int excludeLeft = screen.getLeftPos();
+		int excludeTop = screen.getTopPos();
+		int excludeRight = Math.max(screen.getLeftPos() + screen.getImageWidth(), x + Math.max(getWidth(), craftSectionWidth));
+		int excludeBottom = Math.max(screen.getTopPos() + screen.getImageHeight(), y + openTabDimension.height());
 		excludeTop = Math.min(excludeTop, y);
 
 		int panelW = BOOK_PANEL_WIDTH;
@@ -265,8 +265,8 @@ public class AdvancedCraftingUpgradeTab extends UpgradeSettingsTab<CraftingUpgra
 	}
 
 	@Override
-	protected void renderBg(GuiGraphics guiGraphics, Minecraft minecraft, int mouseX, int mouseY) {
-		super.renderBg(guiGraphics, minecraft, mouseX, mouseY);
+	protected void extractBg(GuiGraphicsExtractor guiGraphics, Minecraft minecraft, int mouseX, int mouseY) {
+		super.extractBg(guiGraphics, minecraft, mouseX, mouseY);
 		if (!getContainer().isOpen()) {
 			return;
 		}
@@ -277,14 +277,14 @@ public class AdvancedCraftingUpgradeTab extends UpgradeSettingsTab<CraftingUpgra
 	}
 
 	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		super.render(guiGraphics, mouseX, mouseY, partialTicks);
+	public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
+		super.extractRenderState(guiGraphics, mouseX, mouseY, partialTicks);
 		if (!getContainer().isOpen()) {
 			return;
 		}
 		repositionRecipeToggle();
 		if (recipeToggleButton != null) {
-			recipeToggleButton.render(guiGraphics, mouseX, mouseY, partialTicks);
+			recipeToggleButton.extractRenderState(guiGraphics, mouseX, mouseY, partialTicks);
 		}
 	}
 
@@ -292,17 +292,17 @@ public class AdvancedCraftingUpgradeTab extends UpgradeSettingsTab<CraftingUpgra
 	 * Drawn from {@code ScreenEvent.Render.Post}. The upgrade tab itself is rendered before
 	 * backpack slots, so drawing the book there puts slots and JEI-adjacent UI on top of it.
 	 */
-	public void renderRecipeBook(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+	public void renderRecipeBook(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
 		if (recipeBook == null || !isOpen || !getContainer().isOpen() || !bookVisible || !recipeBook.isVisible()) {
 			return;
 		}
-		recipeBook.render(guiGraphics, mouseX, mouseY, partialTicks);
+		recipeBook.extractRenderState(guiGraphics, mouseX, mouseY, partialTicks);
 		// Ghost slots use upgrade-grid coordinates, which are relative to the storage screen origin.
 		guiGraphics.pose().pushMatrix();
-		guiGraphics.pose().translate(screen.getGuiLeft(), screen.getGuiTop());
-		recipeBook.renderGhostRecipe(guiGraphics, true);
+		guiGraphics.pose().translate(screen.getLeftPos(), screen.getTopPos());
+		recipeBook.extractGhostRecipe(guiGraphics, true);
 		guiGraphics.pose().popMatrix();
-		recipeBook.renderTooltip(guiGraphics, mouseX, mouseY, null);
+		recipeBook.extractTooltip(guiGraphics, mouseX, mouseY, null);
 	}
 
 	/**
@@ -338,8 +338,8 @@ public class AdvancedCraftingUpgradeTab extends UpgradeSettingsTab<CraftingUpgra
 		int gridLeftOffset = craftingUIAddition.getWidth();
 		int slotNumber = 0;
 		for (Slot slot : getContainer().getSlots()) {
-			slot.x = x + 3 + gridLeftOffset - screen.getGuiLeft() + 1 + (slotNumber % 3) * 18;
-			slot.y = y + 44 - screen.getGuiTop() + 1 + (slotNumber / 3) * 18;
+			slot.x = x + 3 + gridLeftOffset - screen.getLeftPos() + 1 + (slotNumber % 3) * 18;
+			slot.y = y + 44 - screen.getTopPos() + 1 + (slotNumber / 3) * 18;
 			slotNumber++;
 			if (slotNumber >= 9) {
 				break;
@@ -347,8 +347,8 @@ public class AdvancedCraftingUpgradeTab extends UpgradeSettingsTab<CraftingUpgra
 		}
 
 		Slot craftingResult = getContainer().getSlots().get(9);
-		craftingResult.x = x + 3 + gridLeftOffset - screen.getGuiLeft() + 19;
-		craftingResult.y = y + 44 - screen.getGuiTop() + 72;
+		craftingResult.x = x + 3 + gridLeftOffset - screen.getLeftPos() + 19;
+		craftingResult.y = y + 44 - screen.getTopPos() + 72;
 
 		craftingUIAddition.onCraftingSlotsDisplayed(getContainer().getSlots());
 		if (bridgeMenu != null) {

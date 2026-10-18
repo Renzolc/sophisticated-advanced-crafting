@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'maven-publish'
-    id 'net.neoforged.moddev' version '2.0.147'
+    id 'net.neoforged.moddev' version '2.0.148'
     id 'idea'
 }
 
@@ -40,7 +40,7 @@ base {
     archivesName = mod_id
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 
 // Dev-run source set. Declared before neoForge so runs can load it. Classpath is attached below.
 sourceSets {
@@ -54,10 +54,7 @@ sourceSets {
 neoForge {
     version = project.neo_version
 
-    parchment {
-        mappingsVersion = project.parchment_mappings_version
-        minecraftVersion = project.parchment_minecraft_version
-    }
+    // Minecraft 26.1 is unobfuscated, so there are no Parchment mappings.
 
     accessTransformers = project.files('src/main/resources/META-INF/accesstransformer.cfg')
 

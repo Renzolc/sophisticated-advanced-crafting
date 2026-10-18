@@ -93,3 +93,22 @@ Backpacks 1.21.11-3.26.3.2168 (version 3.26.3), Storage 1.21.11-1.5.102.2142 (ve
 - `gradlew clean build` succeeded. Jar `sophisticated_advanced_crafting-1.0.6-mc1.21.11.jar` (58194 bytes). The devcheck package is not in the jar.
 - Dedicated server: `Done (1.980s)! For help, type "help"`. Log line `SAC devcheck: mixins applied (server)`. No mixin, registry, datapack, or recipe errors from this mod.
 - Client: resource reload included `mod/sophisticated_advanced_crafting`, then `Sound engine started`. Log line `SAC devcheck: mixins applied (client)`. No mixin or mod errors. Client process was stopped after the main menu.
+
+## 26.1.2
+
+NeoForge 26.1.2.114, Java 25, ModDevGradle 2.0.148, no Parchment (unobfuscated).
+Sophisticated Core 26.1.2-1.5.14.2409 (mods.toml version 1.5.14, NeoForge `[26.1.2.44-beta,26.2.0)`),
+Backpacks 26.1.2-3.26.13.2207 (version 3.26.13), Storage 26.1.2-1.5.122.2185 (version 1.5.122).
+26.1.2.114 sits inside that range, so no NeoForge bump.
+
+- GUI drawing uses `GuiGraphicsExtractor`. Tab `render` / `renderBg` are `extractRenderState` / `extractBg`. The recipe book uses `extractRenderState`, `extractGhostRecipe`, and `extractTooltip`. Buttons use `extractRenderState`.
+- Screen origin is `getLeftPos` / `getTopPos`; size is `getImageWidth` / `getImageHeight`.
+- `ScreenEvent.Render` still exposes `getGuiGraphics()`, now a `GuiGraphicsExtractor`.
+- The dev check loads mixin targets without running static initializers. Recipe-book classes touch item components in `<clinit>`, and common setup is before components are bound (`Components not bound yet`).
+- Mixin targets for placement are unchanged.
+
+## Tests
+
+- `gradlew clean build` succeeded. Jar `sophisticated_advanced_crafting-1.0.6-mc26.1.2.jar` (58226 bytes). The devcheck package is not in the jar.
+- Dedicated server: `Done (1.834s)! For help, type "help"`. Log line `SAC devcheck: mixins applied (server)`. No mixin, registry, datapack, or recipe errors from this mod.
+- Client: resource reload included `mod/sophisticated_advanced_crafting`, then `Sound engine started`. Log line `SAC devcheck: mixins applied (client)`. No mixin or mod errors. Client process was stopped after the main menu. The first client launch crashed in the dev check because it initialized recipe-book classes during common setup; loading those classes without initialization fixed it.

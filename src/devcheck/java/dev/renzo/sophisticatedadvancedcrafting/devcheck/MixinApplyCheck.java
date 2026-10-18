@@ -36,9 +36,18 @@ public final class MixinApplyCheck {
 		SophisticatedAdvancedCraftingMod.LOGGER.info("SAC devcheck: mixins applied ({})", side);
 	}
 
+	/**
+	 * Loads the class without running its static initializer. On 26.1, recipe-book
+	 * classes touch item components during {@code <clinit>}, and common setup is too early.
+	 * Mixin application happens at class load, so the injected hooks are still visible.
+	 */
+	private static Class<?> load(String name) throws ClassNotFoundException {
+		return Class.forName(name, false, MixinApplyCheck.class.getClassLoader());
+	}
+
 	private static void requireClass(String name) {
 		try {
-			Class.forName(name);
+			load(name);
 		} catch (ClassNotFoundException e) {
 			throw new IllegalStateException("SAC devcheck failed to load " + name, e);
 		}
@@ -46,7 +55,7 @@ public final class MixinApplyCheck {
 
 	private static void requireMethod(String className, String method) {
 		try {
-			Class<?> type = Class.forName(className);
+			Class<?> type = load(className);
 			type.getDeclaredMethod(method);
 		} catch (ReflectiveOperationException e) {
 			throw new IllegalStateException("SAC devcheck: mixin hook " + className + "#" + method + " is missing", e);

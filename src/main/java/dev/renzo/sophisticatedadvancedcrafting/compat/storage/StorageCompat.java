@@ -5,7 +5,7 @@ import dev.renzo.sophisticatedadvancedcrafting.upgrade.AdvancedCraftingUpgradeIt
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.Item;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import net.p3pp3rf1y.sophisticatedstorage.Config;
 import net.p3pp3rf1y.sophisticatedcore.common.gui.UpgradeContainerRegistry;
@@ -20,8 +20,10 @@ public final class StorageCompat {
 	private StorageCompat() {
 	}
 
-	public static final DeferredHolder<Item, AdvancedCraftingUpgradeItem> STORAGE_ADVANCED_CRAFTING_UPGRADE = ModItems.ITEMS.register(
-			"storage_advanced_crafting_upgrade", () -> new AdvancedCraftingUpgradeItem(Config.SERVER.maxUpgradesPerStorage));
+	public static final DeferredItem<AdvancedCraftingUpgradeItem> STORAGE_ADVANCED_CRAFTING_UPGRADE = ModItems.ITEMS.registerItem(
+			"storage_advanced_crafting_upgrade",
+			properties -> new AdvancedCraftingUpgradeItem(Config.SERVER.maxUpgradesPerStorage, properties),
+			new Item.Properties());
 
 	public static final UpgradeContainerType<CraftingUpgradeWrapper, CraftingUpgradeContainer> STORAGE_ADVANCED_CRAFTING_TYPE =
 			new UpgradeContainerType<>(CraftingUpgradeContainer::new);

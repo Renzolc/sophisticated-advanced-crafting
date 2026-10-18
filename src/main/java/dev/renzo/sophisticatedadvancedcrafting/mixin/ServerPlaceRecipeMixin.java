@@ -1,61 +1,64 @@
 package dev.renzo.sophisticatedadvancedcrafting.mixin;
 
 import dev.renzo.sophisticatedadvancedcrafting.backpack.BackpackCraftingAccess;
+import net.minecraft.core.Holder;
 import net.minecraft.recipebook.ServerPlaceRecipe;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.player.StackedContents;
+import net.minecraft.world.entity.player.StackedItemContents;
 import net.minecraft.world.inventory.CraftingMenu;
-import net.minecraft.world.inventory.RecipeBookMenu;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * World crafting table: pull ingredients from backpacks that have our Advanced Crafting upgrade
- * when the player inventory alone cannot supply them.
+ * World crafting table: when the open menu is a vanilla {@link CraftingMenu}, backpacks that have
+ * the Advanced Crafting upgrade count toward craftability and can supply ingredients the player
+ * inventory does not have. The upgrade tab places through its own payload and never reaches here.
  */
 @Mixin(ServerPlaceRecipe.class)
 public abstract class ServerPlaceRecipeMixin {
 	@Shadow
-	protected Inventory inventory;
+	private Inventory inventory;
 
-	@Shadow
-	protected RecipeBookMenu<?, ?> menu;
+	/** Present only when this mixin applied. The dev-only check looks it up by name. */
+	@Unique
+	private static boolean sophisticatedAdvancedCrafting$mixinApplied() {
+		return true;
+	}
 
-	@Shadow
-	protected StackedContents stackedContents;
-
-	@Inject(method = "recipeClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/inventory/RecipeBookMenu;fillCraftSlotsStackedContents(Lnet/minecraft/world/entity/player/StackedContents;)V", shift = At.Shift.AFTER))
-	private void sophisticatedAdvancedCrafting$accountBackpack(CallbackInfo ci) {
-		if (!(this.menu instanceof CraftingMenu)) {
-			return;
-		}
+	@Inject(method = "tryPlaceRecipe", at = @At("HEAD"))
+	private void sophisticatedAdvancedCrafting$accountBackpack(RecipeHolder<?> recipe, StackedItemContents contents, CallbackInfoReturnable<?> cir) {
 		Player player = this.inventory.player;
-		BackpackCraftingAccess.accountBackpackContents(player, this.stackedContents);
+		if (player != null && player.containerMenu instanceof CraftingMenu) {
+			BackpackCraftingAccess.accountBackpackContents(player, contents);
+		}
 	}
 
 	@Inject(method = "moveItemToGrid", at = @At("HEAD"), cancellable = true)
-	private void sophisticatedAdvancedCrafting$moveFromBackpack(Slot slot, ItemStack stack, int maxAmount, CallbackInfoReturnable<Integer> cir) {
-		if (!(this.menu instanceof CraftingMenu) || stack.isEmpty() || maxAmount <= 0) {
+	private void sophisticatedAdvancedCrafting$moveFromBackpack(Slot slot, Holder<Item> item, int maxAmount, CallbackInfoReturnable<Integer> cir) {
+		if (maxAmount <= 0 || item == null) {
 			return;
 		}
 		Player player = this.inventory.player;
+		if (player == null || !(player.containerMenu instanceof CraftingMenu)) {
+			return;
+		}
+		if (this.inventory.findSlotMatchingCraftingIngredient(item, slot.getItem()) != -1) {
+			return;
+		}
 		if (!BackpackCraftingAccess.hasAdvancedCraftingUpgrade(player)) {
 			return;
 		}
-		// Let vanilla handle player-inventory matches; only intervene when inv has none.
-		if (this.inventory.findSlotMatchingUnusedItem(stack) != -1) {
-			return;
-		}
-		ItemStack extracted = BackpackCraftingAccess.extractMatching(player, stack, maxAmount);
+		ItemStack extracted = BackpackCraftingAccess.extractMatching(player, item, slot.getItem(), maxAmount);
 		if (extracted.isEmpty()) {
-			cir.setReturnValue(-1);
 			return;
 		}
 		int moved = extracted.getCount();

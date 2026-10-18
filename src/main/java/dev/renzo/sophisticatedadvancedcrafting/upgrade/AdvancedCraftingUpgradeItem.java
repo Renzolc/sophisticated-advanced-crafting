@@ -1,6 +1,7 @@
 package dev.renzo.sophisticatedadvancedcrafting.upgrade;
 
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.Item;
 import net.p3pp3rf1y.sophisticatedcore.upgrades.IUpgradeCountLimitConfig;
 import net.p3pp3rf1y.sophisticatedcore.upgrades.crafting.CraftingUpgradeItem;
 
@@ -14,8 +15,8 @@ public class AdvancedCraftingUpgradeItem extends CraftingUpgradeItem {
 	private static final List<UpgradeConflictDefinition> CONFLICTS = List.of(new UpgradeConflictDefinition(CraftingUpgradeItem.class::isInstance, 0,
 			Component.translatable("gui.sophisticated_advanced_crafting.error.crafting_upgrade_exists")));
 
-	public AdvancedCraftingUpgradeItem(IUpgradeCountLimitConfig upgradeTypeLimitConfig) {
-		super(upgradeTypeLimitConfig);
+	public AdvancedCraftingUpgradeItem(IUpgradeCountLimitConfig upgradeTypeLimitConfig, Item.Properties properties) {
+		super(upgradeTypeLimitConfig, properties);
 	}
 
 	@Override

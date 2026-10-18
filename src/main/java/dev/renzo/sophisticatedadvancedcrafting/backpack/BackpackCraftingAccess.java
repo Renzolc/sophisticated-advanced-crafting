@@ -1,8 +1,10 @@
 package dev.renzo.sophisticatedadvancedcrafting.backpack;
 
 import dev.renzo.sophisticatedadvancedcrafting.SophisticatedAdvancedCraftingMod;
+import net.minecraft.core.Holder;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.player.StackedContents;
+import net.minecraft.world.entity.player.StackedItemContents;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.fml.ModList;
 
@@ -26,8 +28,8 @@ public final class BackpackCraftingAccess {
 				Class<?> impl = Class.forName(
 						"dev.renzo.sophisticatedadvancedcrafting.backpack.BackpackCraftingAccessImpl");
 				has = impl.getMethod("hasAdvancedCraftingUpgrade", Player.class);
-				account = impl.getMethod("accountBackpackContents", Player.class, StackedContents.class);
-				extract = impl.getMethod("extractMatching", Player.class, ItemStack.class, int.class);
+				account = impl.getMethod("accountBackpackContents", Player.class, StackedItemContents.class);
+				extract = impl.getMethod("extractMatching", Player.class, Holder.class, ItemStack.class, int.class);
 				insert = impl.getMethod("insertRemaining", Player.class, ItemStack.class);
 			} catch (ReflectiveOperationException e) {
 				SophisticatedAdvancedCraftingMod.LOGGER.warn("Backpack crafting access unavailable", e);
@@ -53,7 +55,7 @@ public final class BackpackCraftingAccess {
 		}
 	}
 
-	public static void accountBackpackContents(Player player, StackedContents contents) {
+	public static void accountBackpackContents(Player player, StackedItemContents contents) {
 		if (ACCOUNT == null) {
 			return;
 		}
@@ -63,12 +65,12 @@ public final class BackpackCraftingAccess {
 		}
 	}
 
-	public static ItemStack extractMatching(Player player, ItemStack template, int amount) {
+	public static ItemStack extractMatching(Player player, Holder<Item> item, ItemStack existing, int amount) {
 		if (EXTRACT == null) {
 			return ItemStack.EMPTY;
 		}
 		try {
-			return (ItemStack) EXTRACT.invoke(null, player, template, amount);
+			return (ItemStack) EXTRACT.invoke(null, player, item, existing, amount);
 		} catch (ReflectiveOperationException e) {
 			return ItemStack.EMPTY;
 		}

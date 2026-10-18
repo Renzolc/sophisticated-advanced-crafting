@@ -7,18 +7,10 @@
     "RRR"
   ],
   "key": {
-    "D": {
-      "item": "minecraft:diamond"
-    },
-    "G": {
-      "item": "minecraft:gold_ingot"
-    },
-    "U": {
-      "item": "sophisticatedstorage:crafting_upgrade"
-    },
-    "R": {
-      "item": "minecraft:redstone"
-    }
+    "D": "minecraft:diamond",
+    "G": "minecraft:gold_ingot",
+    "U": "sophisticatedstorage:crafting_upgrade",
+    "R": "minecraft:redstone"
   },
   "result": {
     "count": 1,

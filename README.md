@@ -1,12 +1,12 @@
 # Sophisticated Advanced Crafting
 
-NeoForge 1.21.1 mod that adds **Advanced Crafting Upgrades** for Sophisticated Backpacks and Sophisticated Storage.
+NeoForge mod for Minecraft 1.21.4 that adds **Advanced Crafting Upgrades** for Sophisticated Backpacks and Sophisticated Storage.
 
 One jar replaces the separate `sb-advanced-crafting` and `ss-advanced-crafting` mods.
 
 ## Features
 
-- Floating green recipe book that never overlaps the storage GUI / player inventory / hotbar (right → left → above → below outside the full screen content; closed by default; category-tab overhang included)
+- Floating green recipe book beside the storage GUI (left preferred, away from JEI). Category tabs may hang off-screen. On a short GUI the book still opens at the least-overlap spot. Closed by default.
 - Dual-source recipe placement in the upgrade tab (storage/backpack inventory + player inventory)
 - **World crafting tables** also pull from backpack inventory when the backpack has this Advanced Crafting upgrade
 - Distinct icons: backpack copper+gold, storage wood+gold
@@ -23,8 +23,8 @@ Conflicts with the stock `CraftingUpgradeItem` in the same backpack/storage.
 
 ## Dependencies
 
-- **Required:** Minecraft 1.21.1, NeoForge 21.1+, Sophisticated Core
-- **Optional:** Sophisticated Backpacks, Sophisticated Storage
+- **Required:** Minecraft 1.21.4, NeoForge 21.4.158+, Sophisticated Core 1.21.4-1.5.1.2350
+- **Optional:** Sophisticated Backpacks 1.21.4-3.27.2.2166, Sophisticated Storage 1.21.4-1.6.0.2138
 
 ## Build
 
@@ -32,7 +32,7 @@ Conflicts with the stock `CraftingUpgradeItem` in the same backpack/storage.
 ./gradlew build
 ```
 
-Jar: `build/libs/sophisticated_advanced_crafting-1.0.3.jar`
+Jar: `build/libs/sophisticated_advanced_crafting-1.0.6-mc1.21.4.jar`
 
 ## License
 

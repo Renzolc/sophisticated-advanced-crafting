@@ -10,6 +10,12 @@ tasks.named('wrapper', Wrapper).configure {
 }
 
 version = mod_version
+// Jar file name replaces '+' so the file is sophisticated_advanced_crafting-1.0.6-mcV.jar.
+base.archivesName = mod_id
+tasks.named('jar', Jar).configure {
+    archiveVersion = mod_version.replace('+', '-')
+    exclude 'dev/renzo/sophisticatedadvancedcrafting/devcheck/**'
+}
 group = mod_group_id
 
 sourceSets.main.resources {
@@ -36,6 +42,15 @@ base {
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
+// Dev-run source set. Declared before neoForge so runs can load it. Classpath is attached below.
+sourceSets {
+    devcheck {
+        java {
+            srcDir 'src/devcheck/java'
+        }
+    }
+}
+
 neoForge {
     version = project.neo_version
 
@@ -59,6 +74,8 @@ neoForge {
         configureEach {
             systemProperty 'forge.logging.markers', 'REGISTRIES'
             systemProperty 'mixin.env.disableRefMap', 'true'
+            systemProperty 'mixin.debug.verify', 'true'
+            systemProperty 'mixin.checks.interfaces', 'true'
             logLevel = org.slf4j.event.Level.DEBUG
         }
     }
@@ -66,6 +83,7 @@ neoForge {
     mods {
         "${mod_id}" {
             sourceSet(sourceSets.main)
+            sourceSet(sourceSets.devcheck)
         }
     }
 }
@@ -75,20 +93,16 @@ configurations {
 }
 
 dependencies {
-    // sophisticatedcore 1.21.1-1.5.7.2381 (required)
-    implementation "maven.modrinth:nmoqTijg:p09oohxN"
-    // sophisticatedbackpacks 1.21.1-3.26.9.2195 (optional at runtime; needed to compile backpacks compat)
-    implementation "maven.modrinth:TyCTlI4b:1pYxRkKq"
-    // sophisticatedstorage 1.21.1-1.6.2.2159 (optional at runtime; needed to compile storage compat)
-    implementation "maven.modrinth:hMlaZH8f:f7c8aEld"
-
-    // Local jar fallback if Modrinth is unreachable
-    compileOnly files(
-            "libs/sophisticatedcore-1.21.1-1.5.7.2381.jar",
-            "libs/sophisticatedbackpacks-1.21.1-3.26.9.2195.jar",
-            "libs/sophisticatedstorage-1.21.1-1.6.2.2159.jar"
-    )
+    // Required at runtime. Backpacks and storage are optional at runtime but needed to compile compat.
+    implementation "maven.modrinth:sophisticated-core:${sophisticated_core_version}"
+    implementation "maven.modrinth:sophisticated-backpacks:${sophisticated_backpacks_version}"
+    implementation "maven.modrinth:sophisticated-storage:${sophisticated_storage_version}"
 }
+
+sourceSets.devcheck.compileClasspath += sourceSets.main.compileClasspath
+sourceSets.devcheck.compileClasspath += sourceSets.main.output
+sourceSets.devcheck.runtimeClasspath += sourceSets.main.runtimeClasspath
+sourceSets.devcheck.runtimeClasspath += sourceSets.main.output
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
     var replaceProperties = [

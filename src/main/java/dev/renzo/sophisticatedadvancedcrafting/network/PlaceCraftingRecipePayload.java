@@ -8,10 +8,14 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.crafting.display.RecipeDisplayId;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.p3pp3rf1y.sophisticatedcore.common.gui.ICraftingContainer;
 import net.p3pp3rf1y.sophisticatedcore.common.gui.StorageContainerMenuBase;
@@ -27,13 +31,14 @@ import java.util.Set;
 /**
  * Places a crafting recipe into the open advanced crafting upgrade grid, pulling ingredients
  * from backpack/storage inventory and player inventory via Sophisticated Core's dual-source transfer.
+ * The id is a vanilla {@link RecipeDisplayId} index; the server resolves it back to the recipe.
  */
-public record PlaceCraftingRecipePayload(ResourceLocation recipeId, boolean maxTransfer) implements CustomPacketPayload {
+public record PlaceCraftingRecipePayload(int displayId, boolean maxTransfer) implements CustomPacketPayload {
 	public static final Type<PlaceCraftingRecipePayload> TYPE = new Type<>(
 			ResourceLocation.fromNamespaceAndPath(SophisticatedAdvancedCraftingMod.MOD_ID, "place_crafting_recipe"));
 
 	public static final StreamCodec<RegistryFriendlyByteBuf, PlaceCraftingRecipePayload> STREAM_CODEC = StreamCodec.composite(
-			ResourceLocation.STREAM_CODEC, PlaceCraftingRecipePayload::recipeId, ByteBufCodecs.BOOL, PlaceCraftingRecipePayload::maxTransfer,
+			ByteBufCodecs.VAR_INT, PlaceCraftingRecipePayload::displayId, ByteBufCodecs.BOOL, PlaceCraftingRecipePayload::maxTransfer,
 			PlaceCraftingRecipePayload::new);
 
 	@Override
@@ -44,7 +49,22 @@ public record PlaceCraftingRecipePayload(ResourceLocation recipeId, boolean maxT
 	public static void handle(PlaceCraftingRecipePayload payload, IPayloadContext context) {
 		context.enqueueWork(() -> {
 			Player player = context.player();
-			if (!(player.containerMenu instanceof StorageContainerMenuBase<?> menu)) {
+			if (!(player instanceof ServerPlayer serverPlayer)) {
+				return;
+			}
+			if (!(serverPlayer.containerMenu instanceof StorageContainerMenuBase<?> menu)) {
+				return;
+			}
+
+			RecipeManager.ServerDisplayInfo info = serverPlayer.serverLevel().recipeAccess().getRecipeFromDisplay(new RecipeDisplayId(payload.displayId()));
+			if (info == null) {
+				return;
+			}
+			RecipeHolder<?> holder = info.parent();
+			if (holder.value().getType() != RecipeType.CRAFTING || holder.value().placementInfo().isImpossibleToPlace()) {
+				return;
+			}
+			if (!serverPlayer.getRecipeBook().contains(holder.id())) {
 				return;
 			}
 
@@ -72,11 +92,10 @@ public record PlaceCraftingRecipePayload(ResourceLocation recipeId, boolean maxT
 
 			List<Integer> craftingSlotIndexes = recipeSlots.stream().map(s -> s.index).toList();
 			List<Integer> inventorySlotIndexes = menu.slots.stream()
-					.filter(s -> s.isActive() && s.mayPickup(player) && !excluded.contains(s))
+					.filter(s -> s.isActive() && s.mayPickup(serverPlayer) && !excluded.contains(s))
 					.map(s -> s.index)
 					.toList();
 
-			// Prefer templates that match items actually present (tag-safe for Core's exact-item transfer).
 			List<ItemStack> available = new ArrayList<>();
 			for (int index : inventorySlotIndexes) {
 				if (index >= 0 && index < menu.slots.size()) {
@@ -86,7 +105,6 @@ public record PlaceCraftingRecipePayload(ResourceLocation recipeId, boolean maxT
 					}
 				}
 			}
-			// Also allow matching against items already sitting in the craft grid.
 			for (Slot recipeSlot : recipeSlots) {
 				ItemStack stack = recipeSlot.getItem();
 				if (!stack.isEmpty()) {
@@ -94,12 +112,12 @@ public record PlaceCraftingRecipePayload(ResourceLocation recipeId, boolean maxT
 				}
 			}
 
-			List<ItemStack> stacks = RecipePlacementHelper.expandCraftingRecipeToGrid(player.level(), payload.recipeId(), available);
+			List<ItemStack> stacks = RecipePlacementHelper.expandCraftingRecipeToGrid(holder, available);
 			if (stacks.isEmpty() || stacks.stream().allMatch(ItemStack::isEmpty)) {
 				return;
 			}
 
-			CraftingContainerRecipeTransferHandlerServer.setItemsWithStacks(player, payload.recipeId(), RecipeType.CRAFTING, stacks, craftingSlotIndexes,
+			CraftingContainerRecipeTransferHandlerServer.setItemsWithStacks(serverPlayer, holder.id(), RecipeType.CRAFTING, stacks, craftingSlotIndexes,
 					inventorySlotIndexes, payload.maxTransfer());
 		});
 	}

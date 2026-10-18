@@ -1,129 +1,150 @@
 package dev.renzo.sophisticatedadvancedcrafting.client.recipebook;
 
+import dev.renzo.sophisticatedadvancedcrafting.mixin.RecipeBookComponentAccess;
 import dev.renzo.sophisticatedadvancedcrafting.network.PlaceCraftingRecipePayload;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.recipebook.RecipeBookComponent;
-import net.minecraft.client.gui.screens.recipebook.RecipeBookTabButton;
+import net.minecraft.client.gui.screens.recipebook.CraftingRecipeBookComponent;
 import net.minecraft.client.gui.screens.recipebook.RecipeCollection;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.player.StackedContents;
-import net.minecraft.world.inventory.RecipeBookType;
+import net.minecraft.world.entity.player.StackedItemContents;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.display.RecipeDisplayEntry;
+import net.minecraft.world.item.crafting.display.RecipeDisplayId;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.p3pp3rf1y.sophisticatedcore.common.gui.StorageContainerMenuBase;
-import net.p3pp3rf1y.sophisticatedcore.upgrades.crafting.CraftingUpgradeContainer;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Vanilla green recipe book that:
  * <ul>
  *   <li>does not replace {@code player.containerMenu}</li>
- *   <li>does not mutate vanilla {@link net.minecraft.client.ClientRecipeBook} open state</li>
- *   <li>uses {@link DualSourceRecipeButton} so recipe buttons never cast
- *       {@code BackpackContainer} to {@code RecipeBookMenu}</li>
- *   <li>counts backpack storage + player inventory for craftability</li>
- *   <li>places via {@link PlaceCraftingRecipePayload} (dual-source server transfer)</li>
+ *   <li>does not mutate vanilla recipe-book open state or send book settings</li>
+ *   <li>counts storage slots (including the player inventory on that screen) for craftability</li>
+ *   <li>places via {@link PlaceCraftingRecipePayload} instead of the vanilla place-recipe packet</li>
  * </ul>
+ * The menu is fixed at construction. Call {@link #initAnchored} rather than {@link #init}.
  */
-public class DualSourceRecipeBookComponent extends RecipeBookComponent {
-	private static final Component ALL_RECIPES_TOOLTIP = Component.translatable("gui.recipebook.toggleRecipes.all");
-
-	private DualSourceRecipeBookMenu bridgeMenu;
+public class DualSourceRecipeBookComponent extends CraftingRecipeBookComponent {
 	private int bookLeft;
 	private int bookTop;
 	private int lastStorageHash;
+	private RecipeDisplayId lastPlaced;
 
-	public DualSourceRecipeBookComponent() {
-		// Replace vanilla RecipeButtons that cast player.containerMenu with ones that
-		// read our DualSourceRecipeBookMenu (this.menu) instead.
-		this.recipeBookPage.buttons.clear();
-		for (int i = 0; i < 20; i++) {
-			this.recipeBookPage.buttons.add(new DualSourceRecipeButton(() -> this.menu));
-		}
+	public DualSourceRecipeBookComponent(DualSourceRecipeBookMenu menu) {
+		super(menu);
+	}
+
+	public DualSourceRecipeBookMenu bridge() {
+		return (DualSourceRecipeBookMenu) this.menu;
 	}
 
 	/**
-	 * Initialize / re-anchor the book so its panel top-left is at ({@code bookLeft}, {@code bookTop}).
-	 * Never calls {@link #init} (which would replace {@code player.containerMenu}).
-	 * Vanilla centers using {@code (width - 147) / 2 - xOffset} with {@code xOffset = 86}.
+	 * Place the panel's top-left at ({@code bookLeft}, {@code bookTop}).
+	 * Vanilla centers with {@code (width - 147) / 2 - xOffset} and {@code xOffset = 86}, and
+	 * vertically with {@code (height - 166) / 2}. Passing those dimensions makes both origins
+	 * land on the anchor. {@code xOffset} stays 86 so a recipe click does not auto-close the book.
 	 */
-	public void initAnchored(Minecraft minecraft, DualSourceRecipeBookMenu menu, int bookLeft, int bookTop) {
-		this.bridgeMenu = menu;
+	public void initAnchored(Minecraft minecraft, int bookLeft, int bookTop) {
 		this.bookLeft = bookLeft;
 		this.bookTop = bookTop;
-
-		int width = 2 * (bookLeft + 86) + 147;
-		int height = 2 * bookTop + 166;
-
 		this.minecraft = minecraft;
-		this.width = width;
-		this.height = height;
-		this.menu = menu;
-		this.widthTooNarrow = false;
-		this.book = minecraft.player.getRecipeBook();
-		this.timesInventoryChanged = minecraft.player.getInventory().getTimesChanged();
-		this.visible = true;
-		this.initVisuals();
-
-		menu.syncSlotPositions();
-		refillDualSourceContents();
-		this.lastStorageHash = computeStorageHash(menu.getStorageMenu());
-	}
-
-	/**
-	 * Safety: never install the bridge menu as {@code player.containerMenu}.
-	 * Callers must use {@link #initAnchored} instead.
-	 */
-	@Override
-	public void init(int width, int height, Minecraft minecraft, boolean widthTooNarrow, net.minecraft.world.inventory.RecipeBookMenu<?, ?> menu) {
-		throw new UnsupportedOperationException("Use initAnchored — vanilla init replaces player.containerMenu");
+		RecipeBookComponentAccess access = (RecipeBookComponentAccess) (Object) this;
+		access.sac$setWidth(2 * (bookLeft + 86) + 147);
+		access.sac$setHeight(2 * bookTop + 166);
+		access.sac$setWidthTooNarrow(false);
+		access.sac$setBook(minecraft.player.getRecipeBook());
+		access.sac$setTimesInventoryChanged(minecraft.player.getInventory().getTimesChanged());
+		access.sac$setVisible(true);
+		access.sac$initVisuals();
+		bridge().syncSlotPositions();
+		refreshContents();
+		this.lastStorageHash = computeStorageHash(bridge().getStorageMenu());
 	}
 
 	public void reanchor(int bookLeft, int bookTop) {
-		if (this.minecraft == null || this.bridgeMenu == null) {
+		if (this.minecraft == null) {
 			return;
 		}
 		if (this.bookLeft == bookLeft && this.bookTop == bookTop && isVisible()) {
-			this.bridgeMenu.syncSlotPositions();
+			bridge().syncSlotPositions();
 			return;
 		}
-		initAnchored(this.minecraft, this.bridgeMenu, bookLeft, bookTop);
+		initAnchored(this.minecraft, bookLeft, bookTop);
 	}
 
-	private void refillDualSourceContents() {
-		if (this.minecraft == null || this.bridgeMenu == null) {
+	@Override
+	public void tick() {
+		if (!isVisible() || this.minecraft == null || this.minecraft.player == null) {
 			return;
 		}
-		StackedContents contents = this.stackedContents;
+		int changed = this.minecraft.player.getInventory().getTimesChanged();
+		int storageHash = computeStorageHash(bridge().getStorageMenu());
+		RecipeBookComponentAccess access = (RecipeBookComponentAccess) (Object) this;
+		if (changed != access.sac$getTimesInventoryChanged() || storageHash != this.lastStorageHash) {
+			access.sac$setTimesInventoryChanged(changed);
+			this.lastStorageHash = storageHash;
+			refreshContents();
+		}
+	}
+
+	/**
+	 * Storage-menu slots already include the player inventory, so skip the vanilla player-inventory fill.
+	 * {@code updateStackedContents} is private and would count that inventory twice.
+	 */
+	private void refreshContents() {
+		StackedItemContents contents = ((RecipeBookComponentAccess) (Object) this).sac$getStackedContents();
 		contents.clear();
-		this.minecraft.player.getInventory().fillStackedContents(contents);
-		accountStorageSlots(this.bridgeMenu.getStorageMenu(), this.bridgeMenu.getCraftingContainer(), contents);
 		this.menu.fillCraftSlotsStackedContents(contents);
-		this.updateCollections(false);
+		this.recipesUpdated();
 	}
 
-	static void accountStorageSlots(StorageContainerMenuBase<?> storageMenu, CraftingUpgradeContainer crafting, StackedContents contents) {
-		Set<Slot> excluded = new HashSet<>(crafting.getRecipeSlots());
-		List<Slot> upgradeSlots = crafting.getSlots();
-		if (upgradeSlots.size() > 9) {
-			excluded.add(upgradeSlots.get(9));
+	/**
+	 * Local visibility only. Vanilla {@code setVisible} writes {@code ClientRecipeBook.setOpen}
+	 * and sends a settings packet, which would leave the crafting-table book stuck open.
+	 */
+	@Override
+	protected void setVisible(boolean visible) {
+		RecipeBookComponentAccess access = (RecipeBookComponentAccess) (Object) this;
+		if (visible) {
+			access.sac$initVisuals();
 		}
-		for (Slot slot : storageMenu.slots) {
-			if (!slot.isActive() || excluded.contains(slot)) {
-				continue;
-			}
-			ItemStack stack = slot.getItem();
-			if (!stack.isEmpty()) {
-				contents.accountSimpleStack(stack);
+		access.sac$setVisible(visible);
+		if (!visible) {
+			access.sac$getRecipeBookPage().setInvisible();
+		}
+	}
+
+	@Override
+	protected void sendUpdateSettings() {
+		// Filter clicks still update the local book flag via vanilla toggleFiltering.
+		// Do not tell the server, or the world crafting table's book settings change.
+	}
+
+	public void setBookVisible(boolean visible) {
+		setVisible(visible);
+	}
+
+	/**
+	 * Called from the recipe-book mixin in place of {@code GameMode.handlePlaceRecipe},
+	 * which always targets {@code player.containerMenu}.
+	 */
+	public boolean placeFromBook(RecipeCollection collection, RecipeDisplayId id) {
+		if (!collection.isCraftable(id) && id.equals(this.lastPlaced)) {
+			return false;
+		}
+		this.lastPlaced = id;
+		((RecipeBookComponentAccess) (Object) this).sac$getGhostSlots().clear();
+		if (!collection.isCraftable(id)) {
+			for (RecipeDisplayEntry entry : collection.getRecipes()) {
+				if (entry.id().equals(id)) {
+					bridge().syncSlotPositions();
+					fillGhostRecipe(entry.display());
+					break;
+				}
 			}
 		}
+		PacketDistributor.sendToServer(new PlaceCraftingRecipePayload(id.index(), Screen.hasShiftDown()));
+		return true;
 	}
 
 	private static int computeStorageHash(StorageContainerMenuBase<?> menu) {
@@ -135,120 +156,5 @@ public class DualSourceRecipeBookComponent extends RecipeBookComponent {
 			hash = 31 * hash + stack.getComponentsPatch().hashCode();
 		}
 		return hash;
-	}
-
-	@Override
-	public void tick() {
-		if (!isVisible() || this.minecraft == null || this.bridgeMenu == null) {
-			return;
-		}
-		// Own the visibility toggle — do not call super.tick() (syncs from book.isOpen).
-		if (this.timesInventoryChanged != this.minecraft.player.getInventory().getTimesChanged()) {
-			this.timesInventoryChanged = this.minecraft.player.getInventory().getTimesChanged();
-			refillDualSourceContents();
-			this.lastStorageHash = computeStorageHash(this.bridgeMenu.getStorageMenu());
-			return;
-		}
-		int storageHash = computeStorageHash(this.bridgeMenu.getStorageMenu());
-		if (storageHash != this.lastStorageHash) {
-			this.lastStorageHash = storageHash;
-			refillDualSourceContents();
-		}
-	}
-
-	/**
-	 * Local visibility only — never touches {@code ClientRecipeBook.setOpen} or
-	 * {@link #sendUpdateSettings}, which would mark CRAFTING as GUI-open globally.
-	 */
-	@Override
-	protected void setVisible(boolean visible) {
-		if (visible) {
-			this.initVisuals();
-		}
-		this.visible = visible;
-		if (!visible) {
-			this.recipeBookPage.setInvisible();
-		}
-	}
-
-	/**
-	 * Never call {@code super.mouseClicked}: vanilla places via
-	 * {@code gameMode.handlePlaceRecipe(player.containerMenu)} and can toggle visibility /
-	 * book settings. Keep search / tab / filter handling without those side effects.
-	 */
-	@Override
-	public boolean mouseClicked(double mouseX, double mouseY, int button) {
-		if (!isVisible() || this.minecraft == null || this.minecraft.player.isSpectator()) {
-			return false;
-		}
-
-		int panelX = (this.width - 147) / 2 - this.xOffset;
-		int panelY = (this.height - 166) / 2;
-
-		if (this.recipeBookPage.mouseClicked(mouseX, mouseY, button, panelX, panelY, 147, 166)) {
-			RecipeHolder<?> recipe = this.recipeBookPage.getLastClickedRecipe();
-			RecipeCollection collection = this.recipeBookPage.getLastClickedRecipeCollection();
-			if (recipe != null && collection != null) {
-				if (!collection.isCraftable(recipe) && this.ghostRecipe.getRecipe() == recipe) {
-					return false;
-				}
-				this.ghostRecipe.clear();
-				boolean maxTransfer = Screen.hasShiftDown();
-				if (!collection.isCraftable(recipe)) {
-					this.setupGhostRecipe(recipe, this.menu.slots);
-				}
-				PacketDistributor.sendToServer(new PlaceCraftingRecipePayload(recipe.id(), maxTransfer));
-			}
-			return true;
-		}
-
-		if (this.searchBox != null && this.searchBox.mouseClicked(mouseX, mouseY, button)) {
-			this.searchBox.setFocused(true);
-			return true;
-		}
-		if (this.searchBox != null) {
-			this.searchBox.setFocused(false);
-		}
-
-		if (this.filterButton != null && this.filterButton.mouseClicked(mouseX, mouseY, button)) {
-			boolean filtering = toggleFilteringLocal();
-			this.filterButton.setStateTriggered(filtering);
-			this.filterButton.setTooltip(filtering
-					? Tooltip.create(this.getRecipeFilterName())
-					: Tooltip.create(ALL_RECIPES_TOOLTIP));
-			this.updateCollections(false);
-			return true;
-		}
-
-		for (RecipeBookTabButton tab : this.tabButtons) {
-			if (tab.mouseClicked(mouseX, mouseY, button)) {
-				if (this.selectedTab != tab) {
-					if (this.selectedTab != null) {
-						this.selectedTab.setStateTriggered(false);
-					}
-					this.selectedTab = tab;
-					this.selectedTab.setStateTriggered(true);
-					this.updateCollections(true);
-				}
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	private boolean toggleFilteringLocal() {
-		RecipeBookType type = this.menu.getRecipeBookType();
-		boolean filtering = !this.book.isFiltering(type);
-		this.book.setFiltering(type, filtering);
-		return filtering;
-	}
-
-	public void setBookVisible(boolean visible) {
-		setVisible(visible);
-	}
-
-	public DualSourceRecipeBookMenu getBridgeMenu() {
-		return bridgeMenu;
 	}
 }

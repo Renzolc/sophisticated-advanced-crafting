@@ -30,8 +30,8 @@ import static net.p3pp3rf1y.sophisticatedcore.client.gui.utils.GuiHelper.GUI_CON
  * <p>
  * The craft grid stays in a compact tab (same footprint as stock crafting). The recipe book
  * floats in free space outside the entire storage screen content area (backpack slots + player
- * inventory + hotbar + craft tab) and is re-anchored every tick. If no non-overlapping on-screen
- * spot exists, the book stays closed rather than covering inventory.
+ * inventory + hotbar + craft tab) and is re-anchored every tick. Category tabs may hang off-screen.
+ * If no clear spot exists, the panel is clamped to the least-overlap position so the book still opens.
  */
 public class AdvancedCraftingUpgradeTab extends UpgradeSettingsTab<CraftingUpgradeContainer> {
 	private static final int BOOK_PANEL_WIDTH = 147;
@@ -45,7 +45,7 @@ public class AdvancedCraftingUpgradeTab extends UpgradeSettingsTab<CraftingUpgra
 	private static final TextureBlitData ARROW = new TextureBlitData(GUI_CONTROLS, new UV(97, 216), new Dimension(15, 8));
 
 	private final ICraftingUIPart craftingUIAddition;
-	private final DualSourceRecipeBookComponent recipeBook = new DualSourceRecipeBookComponent();
+	private DualSourceRecipeBookComponent recipeBook;
 	private DualSourceRecipeBookMenu bridgeMenu;
 	private ImageButton recipeToggleButton;
 	/** Closed by default so opening the upgrade tab does not slam the book onto the GUI. */
@@ -83,6 +83,7 @@ public class AdvancedCraftingUpgradeTab extends UpgradeSettingsTab<CraftingUpgra
 		Minecraft mc = Minecraft.getInstance();
 		if (mc.player != null && screen.getMenu() instanceof StorageContainerMenuBase<?> storageMenu) {
 			bridgeMenu = new DualSourceRecipeBookMenu(storageMenu, getContainer());
+			recipeBook = new DualSourceRecipeBookComponent(bridgeMenu);
 			if (bookVisible) {
 				initRecipeBook();
 			}
@@ -95,7 +96,10 @@ public class AdvancedCraftingUpgradeTab extends UpgradeSettingsTab<CraftingUpgra
 	protected void onTabClose() {
 		super.onTabClose();
 		craftingUIAddition.onCraftingSlotsHidden();
-		recipeBook.setBookVisible(false);
+		if (recipeBook != null) {
+			recipeBook.setBookVisible(false);
+		}
+		recipeBook = null;
 		bridgeMenu = null;
 	}
 
@@ -106,8 +110,10 @@ public class AdvancedCraftingUpgradeTab extends UpgradeSettingsTab<CraftingUpgra
 	}
 
 	private void toggleBook() {
+		if (recipeBook == null) {
+			return;
+		}
 		if (!bookVisible) {
-			// Only open if a non-overlapping placement exists.
 			if (!computeBookAnchor()) {
 				bookVisible = false;
 				recipeBook.setBookVisible(false);
@@ -216,7 +222,7 @@ public class AdvancedCraftingUpgradeTab extends UpgradeSettingsTab<CraftingUpgra
 
 	private void initRecipeBook() {
 		Minecraft mc = Minecraft.getInstance();
-		if (bridgeMenu == null || mc.player == null) {
+		if (bridgeMenu == null || recipeBook == null || mc.player == null) {
 			return;
 		}
 		if (!computeBookAnchor()) {
@@ -224,7 +230,7 @@ public class AdvancedCraftingUpgradeTab extends UpgradeSettingsTab<CraftingUpgra
 			recipeBook.setBookVisible(false);
 			return;
 		}
-		recipeBook.initAnchored(mc, bridgeMenu, bookLeft, bookTop);
+		recipeBook.initAnchored(mc, bookLeft, bookTop);
 	}
 
 	private void repositionRecipeToggle() {
@@ -237,7 +243,7 @@ public class AdvancedCraftingUpgradeTab extends UpgradeSettingsTab<CraftingUpgra
 
 	@Override
 	public void tick() {
-		if (!isOpen || !bookVisible) {
+		if (!isOpen || !bookVisible || recipeBook == null) {
 			return;
 		}
 		if (!computeBookAnchor()) {
@@ -284,12 +290,16 @@ public class AdvancedCraftingUpgradeTab extends UpgradeSettingsTab<CraftingUpgra
 	 * backpack slots, so drawing the book there puts slots and JEI-adjacent UI on top of it.
 	 */
 	public void renderRecipeBook(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		if (!isOpen || !getContainer().isOpen() || !bookVisible || !recipeBook.isVisible()) {
+		if (recipeBook == null || !isOpen || !getContainer().isOpen() || !bookVisible || !recipeBook.isVisible()) {
 			return;
 		}
 		recipeBook.render(guiGraphics, mouseX, mouseY, partialTicks);
-		recipeBook.renderGhostRecipe(guiGraphics, screen.getGuiLeft(), screen.getGuiTop(), true, partialTicks);
-		recipeBook.renderTooltip(guiGraphics, screen.getGuiLeft(), screen.getGuiTop(), mouseX, mouseY);
+		// Ghost slots use upgrade-grid coordinates, which are relative to the storage screen origin.
+		guiGraphics.pose().pushPose();
+		guiGraphics.pose().translate(screen.getGuiLeft(), screen.getGuiTop(), 0);
+		recipeBook.renderGhostRecipe(guiGraphics, true);
+		guiGraphics.pose().popPose();
+		recipeBook.renderTooltip(guiGraphics, mouseX, mouseY, null);
 	}
 
 	/**
@@ -297,7 +307,7 @@ public class AdvancedCraftingUpgradeTab extends UpgradeSettingsTab<CraftingUpgra
 	 * Does not route through {@link #mouseClicked} so craft-grid slot clicks are not stolen.
 	 */
 	public boolean handleRecipeBookMouseClicked(double mouseX, double mouseY, int button) {
-		return isOpen && bookVisible && recipeBook.isVisible() && recipeBook.mouseClicked(mouseX, mouseY, button);
+		return recipeBook != null && isOpen && bookVisible && recipeBook.isVisible() && recipeBook.mouseClicked(mouseX, mouseY, button);
 	}
 
 	@Override
@@ -312,11 +322,11 @@ public class AdvancedCraftingUpgradeTab extends UpgradeSettingsTab<CraftingUpgra
 	}
 
 	public boolean handleKeyPressed(int keyCode, int scanCode, int modifiers) {
-		return isOpen && bookVisible && recipeBook.isVisible() && recipeBook.keyPressed(keyCode, scanCode, modifiers);
+		return recipeBook != null && isOpen && bookVisible && recipeBook.isVisible() && recipeBook.keyPressed(keyCode, scanCode, modifiers);
 	}
 
 	public boolean handleCharTyped(char codePoint, int modifiers) {
-		return isOpen && bookVisible && recipeBook.isVisible() && recipeBook.charTyped(codePoint, modifiers);
+		return recipeBook != null && isOpen && bookVisible && recipeBook.isVisible() && recipeBook.charTyped(codePoint, modifiers);
 	}
 
 	@Override

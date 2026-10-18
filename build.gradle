@@ -54,7 +54,7 @@ sourceSets {
 neoForge {
     version = project.neo_version
 
-    // Minecraft 26.1 is unobfuscated, so there are no Parchment mappings.
+    // Minecraft 26.x is unobfuscated, so there are no Parchment mappings.
 
     accessTransformers = project.files('src/main/resources/META-INF/accesstransformer.cfg')
 

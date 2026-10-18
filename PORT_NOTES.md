@@ -112,3 +112,18 @@ Backpacks 26.1.2-3.26.13.2207 (version 3.26.13), Storage 26.1.2-1.5.122.2185 (ve
 - `gradlew clean build` succeeded. Jar `sophisticated_advanced_crafting-1.0.6-mc26.1.2.jar` (58226 bytes). The devcheck package is not in the jar.
 - Dedicated server: `Done (1.834s)! For help, type "help"`. Log line `SAC devcheck: mixins applied (server)`. No mixin, registry, datapack, or recipe errors from this mod.
 - Client: resource reload included `mod/sophisticated_advanced_crafting`, then `Sound engine started`. Log line `SAC devcheck: mixins applied (client)`. No mixin or mod errors. Client process was stopped after the main menu. The first client launch crashed in the dev check because it initialized recipe-book classes during common setup; loading those classes without initialization fixed it.
+
+## 26.2
+
+NeoForge 26.2.0.88, Java 25, ModDevGradle 2.0.148, no Parchment (unobfuscated).
+Sophisticated Core 26.2-1.5.12.2410 (mods.toml version 1.5.12, NeoForge `[26.2.0.53-beta,26.3.0)`),
+Backpacks 26.2-3.26.12.2210 (version 3.26.12), Storage 26.2-1.5.122.2186 (version 1.5.122).
+26.2.0.88 sits inside that range, so no NeoForge bump.
+
+No source changes from 26.1.2. `ServerPlaceRecipe.tryPlaceRecipe` and `moveItemToGrid`, and `RecipeBookComponent.tryPlaceRecipe` plus `extractRenderState` / `extractGhostRecipe` / `extractTooltip`, keep the 26.1 signatures. Entity type constants and `Minecraft#gui.setScreen` do not appear in this mod. Mixin `compatibilityLevel` stays `JAVA_21`. `RecipePlacementHelper` still compiles with a deprecation note.
+
+## Tests
+
+- `gradlew clean build` succeeded. Jar `sophisticated_advanced_crafting-1.0.6-mc26.2.jar` (58225 bytes). The devcheck package is not in the jar.
+- Dedicated server: `Done (1.861s)! For help, type "help"`. Log line `SAC devcheck: mixins applied (server)`. No mixin, registry, datapack, or recipe errors from this mod.
+- Client: resource reload included `mod/sophisticated_advanced_crafting`, then `Sound engine started`. Log line `SAC devcheck: mixins applied (client)`. No mixin or mod errors. Client process was stopped after the main menu.
